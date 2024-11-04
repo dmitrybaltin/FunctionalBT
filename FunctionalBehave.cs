@@ -10,19 +10,33 @@ namespace FunctionalBtTest
     {
         public Vector3 playerPos;
         public Vector3 playerWorldPos;
-        public float playerDistance;   
+        public float playerDistance;
         public bool playerInRange;
         public bool engaged;
         public bool foo;
+
+        public FunctionalBehave go;
+
+        public ActorBoard(FunctionalBehave go)
+        {
+            this.go = go;
+        }
+    }
+
+    public class MyFunctionalBT : TynyBT<ActorBoard>
+    {
+        public MyFunctionalBT(ActorBoard board) : base(board)
+        {}
+        
     }
 
     [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider))]
     public class FunctionalBehave : MonoBehaviour
     {
         private GameObject player;
-        
-        private ActorBoard actorBoard = new();
-        private AdvancedBT bt = new();
+
+        //private ActorBoard actorBoard;
+        private MyFunctionalBT bt;
         
         private Rigidbody body;
         private Collider collider;
@@ -41,6 +55,9 @@ namespace FunctionalBtTest
 
         void Awake()
         {
+            //actorBoard = new ActorBoard(this);
+            bt = new(new ActorBoard(this));
+            
             player = GameObject.FindGameObjectWithTag("Player");
             body = GetComponent<Rigidbody>();
             collider = GetComponent<Collider>();
@@ -57,83 +74,82 @@ namespace FunctionalBtTest
         {
             ExecuteTree();
         }
-        
-        private Status ExecuteTree()
+
+        public Status ExecuteTree()
         {
             return
-                bt.Sequencer(
-                    () => UpdateBlackboards(actorBoard),
-                    () => bt.Selector(
-                        () => bt.ConditionalVoidActions(
-                            () => actorBoard.playerDistance < 0.5f,
+                bt.Parallel(ParallelPolicy.REQUIRE_ONE_SUCCESS,
+                    bt => bt.Board.go.UpdateBlackboards(bt.Board),
+                    bt => bt.Selector(
+                        bt => bt.ConditionalVoidActions(
+                            bt => bt.Board.playerDistance < 0.5f,
                             Status.RUNNING,
-                            () => SetColor(Color.red),
-                            () => StandAndFight(actorBoard)),
-                        () => bt.ConditionalVoidActions(() => actorBoard.playerDistance < 2f, Status.RUNNING, 
-                            () => SetColor(Color.red),
-                            () => JumpTowards(actorBoard)),
-                        () => bt.ConditionalVoidActions(() => actorBoard.playerDistance < 2.2f, Status.RUNNING, 
-                            () => SetColor(Color.red),
-                            () => MoveAndShot(actorBoard)),
-                        () => bt.ConditionalVoidActions(() => actorBoard.playerDistance < 4f, Status.RUNNING, 
-                            () => SetColor(Color.magenta),
-                            () => MoveAndShot(actorBoard)),
-                        () => bt.ConditionalVoidActions(() => actorBoard.playerDistance < 8f, Status.RUNNING, 
-                            () => SetColor(Color.yellow),
-                            () => Move(actorBoard)),
-                        () => bt.VoidActions(Status.RUNNING, 
-                            () => SetColor(Color.grey),
-                            () => Stand(actorBoard))
-                        )
+                            bt => bt.Board.go.SetColor(Color.red),
+                            bt => bt.Board.go.StandAndFight(bt.Board)),
+                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2f, Status.RUNNING, 
+                            bt => bt.Board.go.SetColor(Color.red),
+                            bt => bt.Board.go.JumpTowards(bt.Board)),
+                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2.2f, Status.RUNNING, 
+                            bt => bt.Board.go.SetColor(Color.red),
+                            bt => bt.Board.go.MoveAndShot(bt.Board)),
+                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 4f, Status.RUNNING, 
+                            bt => bt.Board.go.SetColor(Color.magenta),
+                            bt => bt.Board.go.MoveAndShot(bt.Board)),
+                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 8f, Status.RUNNING, 
+                            bt => bt.Board.go.SetColor(Color.yellow),
+                            bt => bt.Board.go.Move(bt.Board)),
+                        bt => bt.VoidActions(Status.RUNNING, 
+                            bt => bt.Board.go.SetColor(Color.grey),
+                            bt => bt.Board.go.Stand(bt.Board))
+                    ),
+                    bt => bt.Board.go.UpdateForce(bt.Board)
                 );
-        }
+        }        
         
-        private Status UpdateBlackboards(ActorBoard board)
+        public Status UpdateBlackboards(ActorBoard board)
         {
             Vector3 playerWorldPos = player.transform.position;
 
             board.playerWorldPos = playerWorldPos;
             board.playerDistance = Vector3.Distance(playerWorldPos, transform.position);
 
-            UpdateForce(board);
-
             return Status.SUCCESS;
         }
 
-        private void StandAndFight(ActorBoard board)
+        public void StandAndFight(ActorBoard board)
         {
             transform.localScale = initialLocalScale * (1f + Mathf.Sin(Time.realtimeSinceStartup * 20) * 0.2f);
         }
 
-        private void JumpTowards(ActorBoard board)
+        public void JumpTowards(ActorBoard board)
         {
             transform.localScale = initialLocalScale * 1.1f;
 
             playerForce = baseClosePlayerForce;
         }
         
-        private void MoveAndShot(ActorBoard board)
+        public void MoveAndShot(ActorBoard board)
         {
             transform.localScale = initialLocalScale * (1f + Mathf.Sin(Time.realtimeSinceStartup * 10) * 0.1f);
 
             playerForce = baseDistantPlayerForce;
         }
 
-        private void Move(ActorBoard board)
+        public void Move(ActorBoard board)
         {
             transform.localScale = Vector3.Lerp(initialLocalScale, transform.localScale, 0.1f);
 
             playerForce = baseDistantPlayerForce;
         }
 
-        private void Stand(ActorBoard board)
+        public void Stand(ActorBoard board)
         {
             SetColor(Color.grey);
             
             playerForce = 0;
         }
 
-        private void UpdateForce(ActorBoard board)
+        public Status UpdateForce(ActorBoard board)
         {
             var force = (board.playerWorldPos - transform.position) * (playerForce * Time.deltaTime);
 
@@ -147,9 +163,11 @@ namespace FunctionalBtTest
                 }
 
             body.AddForce(force, ForceMode.VelocityChange);
+            
+            return Status.SUCCESS;
         }
 
-        private void SetColor(Color color)
+        public void SetColor(Color color)
         {
             GetComponent<MeshRenderer>().material.SetColor("_Color", color);
         }

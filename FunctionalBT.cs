@@ -16,17 +16,24 @@ namespace FunctionlBT
         REQUIRE_ALL_SUCCESS
     }
 
-    public class TynyBT
+    public class TynyBT<TBoard>
     {
+        public TBoard Board { get; private set; }
+
+        public TynyBT(TBoard board)
+        {
+            Board = board;
+        }
+
         /// <summary>
         /// Classic Action node
         /// </summary>
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Action(Func<Status> func)
+        public Status Action(Func<TynyBT<TBoard>, Status> func)
         {
-            return func.Invoke();
+            return func.Invoke(this);
         }
 
         /// <summary>
@@ -35,9 +42,9 @@ namespace FunctionlBT
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Inverter(Func<Status> func)
+        public Status Inverter(Func<TynyBT<TBoard>, Status> func)
         {
-            return func.Invoke() switch
+            return func.Invoke(this) switch
             {
                 Status.FAILURE => Status.SUCCESS,
                 Status.SUCCESS => Status.FAILURE,
@@ -51,14 +58,14 @@ namespace FunctionlBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Selector(params Func<Status>[] funcs)
+        public Status Selector(params Func<TynyBT<TBoard>, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke();
+                var childstatus = f.Invoke(this);
 
                 switch (childstatus)
                 {
@@ -78,14 +85,14 @@ namespace FunctionlBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Sequencer(params Func<Status>[] funcs)
+        public Status Sequencer(params Func<TynyBT<TBoard>, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke();
+                var childstatus = f.Invoke(this);
 
                 switch (childstatus)
                 {
@@ -105,7 +112,7 @@ namespace FunctionlBT
         /// </summary>
         /// <param name="funcs"></param>
         /// <returns></returns>
-        public Status Parallel(ParallelPolicy policy, params Func<Status>[] funcs)
+        public Status Parallel(ParallelPolicy policy, params Func<TynyBT<TBoard>, Status>[] funcs)
         {
             var hasRunning = false;
             var hasSuccess = false;
@@ -115,7 +122,7 @@ namespace FunctionlBT
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                switch (f.Invoke())
+                switch (f.Invoke(this))
                 {
                     case Status.RUNNING:
                         hasRunning = true;
@@ -147,10 +154,12 @@ namespace FunctionlBT
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
-    }
 
-    public class AdvancedBT : TynyBT
-    {
+        /*    }
+
+    public class AdvancedBT<TBoard> : TynyBT<TBoard>
+    {*/
+        
         /// <summary>
         /// Classic Action node
         /// </summary>
@@ -158,62 +167,62 @@ namespace FunctionlBT
         /// <param name="returnStatus"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status VoidActions(Status returnStatus, params Action[] funcs)
+        public Status VoidActions(Status returnStatus, params Action<TynyBT<TBoard>>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                f.Invoke();
+                f.Invoke(this);
             
             return returnStatus;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalVoidActions(Func<bool> condition, Status returnStatus, params Action[] funcs)
+        public Status ConditionalVoidActions(Func<TynyBT<TBoard>, bool> condition, Status returnStatus, params Action<TynyBT<TBoard>>[] funcs)
         {
-            return condition.Invoke() 
+            return condition.Invoke(this) 
                 ? VoidActions(returnStatus, funcs) 
                 : Status.FAILURE;
         }
 
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalAction(Func<bool> condition, Func<Status> func)
+        public Status ConditionalAction(Func<TynyBT<TBoard>, bool> condition, Func<TynyBT<TBoard>, Status> func)
         {
-            return condition.Invoke() 
+            return condition.Invoke(this) 
                 ? Action(func) 
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalInverter(Func<bool> condition, Func<Status> func)
+        public Status ConditionalInverter(Func<TynyBT<TBoard>, bool> condition, Func<TynyBT<TBoard>, Status> func)
         {
-            return condition.Invoke() 
+            return condition.Invoke(this) 
                 ? Inverter(func) 
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalSelector(Func<bool> condition, params Func<Status>[] funcs)
+        public Status ConditionalSelector(Func<TynyBT<TBoard>, bool> condition, params Func<TynyBT<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke()
+            return condition.Invoke(this)
                 ? Selector(funcs)
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalSequencer(Func<bool> condition, params Func<Status>[] funcs)
+        public Status ConditionalSequencer(Func<TynyBT<TBoard>, bool> condition, params Func<TynyBT<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke()
+            return condition.Invoke(this)
                 ? Sequencer(funcs)
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalParallel(Func<bool> condition, ParallelPolicy policy, params Func<Status>[] funcs)
+        public Status ConditionalParallel(Func<TynyBT<TBoard>, bool> condition, ParallelPolicy policy, params Func<TynyBT<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke()
+            return condition.Invoke(this)
                 ? Parallel(policy, funcs)
                 : Status.FAILURE;
         }
