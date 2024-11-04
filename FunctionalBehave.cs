@@ -6,14 +6,14 @@ using UnityEngine;
 
 namespace FunctionalBtTest
 {
-    public class ActorBoard : AdvancedBT
+    public class ActorBoard
     {
-        public Vector3 playerPos = new ();
-        public Vector3 playerWorldPos = new ();
-        public float playerDistance = new ();
-        public bool playerInRange = new ();
-        public bool engaged = new ();
-        public bool foo = new ();
+        public Vector3 playerPos;
+        public Vector3 playerWorldPos;
+        public float playerDistance;   
+        public bool playerInRange;
+        public bool engaged;
+        public bool foo;
     }
 
     [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider))]
@@ -129,12 +129,13 @@ namespace FunctionalBtTest
         private void Stand(ActorBoard board)
         {
             SetColor(Color.grey);
+            
+            playerForce = 0;
         }
 
         private void UpdateForce(ActorBoard board)
         {
-            var playerWorldPos = board.playerWorldPos;
-            var force = (playerWorldPos - transform.position) * (playerForce * Time.deltaTime);
+            var force = (board.playerWorldPos - transform.position) * (playerForce * Time.deltaTime);
 
             foreach (var enemy in _allEnemies)
                 if (enemy.guid != guid)
