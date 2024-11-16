@@ -86,7 +86,9 @@ namespace FunctionalBtTest
                             Status.RUNNING,
                             bt => bt.Board.go.SetColor(Color.red),
                             bt => bt.Board.go.StandAndFight(bt.Board)),
-                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2f, Status.RUNNING, 
+                        bt => bt.ConditionalVoidActions(
+                            bt => bt.Board.playerDistance < 2f, 
+                            Status.RUNNING, 
                             bt => bt.Board.go.SetColor(Color.red),
                             bt => bt.Board.go.JumpTowards(bt.Board)),
                         bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2.2f, Status.RUNNING, 
