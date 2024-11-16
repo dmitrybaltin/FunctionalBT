@@ -5,23 +5,23 @@ This project provides a functional-style implementation of a behavior tree, desi
 ## Key Features
 
 1. **Concise Tree Definition**  
-   Behavior trees are defined directly in code using lambda expressions, resulting in clear and compact logic.
+   Behavior trees are defined directly in code using lambda expressions, resulting in clear and compact logic.   
 
-2. **Ease of Debugging**  
-   Breakpoints can be placed inside any anonymous delegate, enabling precise and straightforward debugging of tree logic.
+3. **Ease of Debugging**  
+   Сode is easy to debug — the tree definition and execution code are the same, which means you can place breakpoints inside any anonymous delegate, and they will work correctly.  
+   No special complex "behaviour tree debugger" is required, you will use your favorite C# IDE for debugging.
 
 3. **No memory is allocated for tree structure**  
    No memory is allocated for the tree structure because of the structure is embedded in the code itself.
 
-## Notes on Memory Usage
-
-This approach utilizes anonymous delegates, which may incur memory overhead, especially when closures are involved. While this provides flexibility and clarity, it is important to consider memory implications in performance-critical scenarios.
-
 ## Usage Example
 
-Detailed example is inside the file 'FunctionalBehave.cs'
+Detailed example is inside the file 'FunctionalBehave.cs'. 
+Here’s a core of it, the tree definition.
 
-Here’s a core of it, the tree definition:
+This example avoids closures and uses only anonymous delegates, making it relatively efficient in terms of memory usage.  
+
+As you can see bellow this code is easy to debug — you can place breakpoints inside any anonymous delegate, and they will work correctly.
 
 ```csharp
 using System;
@@ -72,9 +72,15 @@ namespace FunctionalBtTest
 }
         //...
 ```
-You can insert a breakpoint on any line of this code that contains an anonymous delegate and it will work correctly.
+
+![Example of debugging](functional_bt_example.jpg)
 
 ---
+
+## Notes on Memory Usage
+
+This approach utilizes anonymous delegates, which may incur memory overhead, especially when closures are involved.  
+However, whether anonymous delegates cause memory traffic depends on the platform and runtime, which remains an open question.
 
 ### Requirements
 
