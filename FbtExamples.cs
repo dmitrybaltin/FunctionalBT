@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Diagnostics;
-using FunctionalBT;
 using UnityEngine;
 using Unity.Profiling.Memory;
 using Debug = UnityEngine.Debug;
 
-namespace FunctionalBtTest
+namespace Baltin.FBT
 {
     public class ActorObject
     {

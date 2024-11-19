@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace FunctionalBT
+namespace Baltin.FBT
 {
     public class LaconicFbt<T>
     {
