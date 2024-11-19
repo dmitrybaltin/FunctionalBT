@@ -3,37 +3,17 @@ using System.Runtime.CompilerServices;
 
 namespace FunctionalBT
 {
-    public enum Status
+    public class StaticFbt<TBoard>
     {
-        SUCCESS = 0,
-        FAILURE = 1,
-        RUNNING = 2,
-    }
-
-    public enum ParallelPolicy
-    {
-        REQUIRE_ONE_SUCCESS,
-        REQUIRE_ALL_SUCCESS
-    }
-
-    public class BaseFbt<TBoard>
-    {
-        public TBoard Board { get; private set; }
-
-        public BaseFbt(TBoard board)
-        {
-            Board = board;
-        }
-
         /// <summary>
         /// Classic Action node
         /// </summary>
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Action(Func<BaseFbt<TBoard>, Status> func)
+        public static Status Action(TBoard board, Func<TBoard, Status> func)
         {
-            return func.Invoke(this);
+            return func.Invoke(board);
         }
 
         /// <summary>
@@ -42,9 +22,9 @@ namespace FunctionalBT
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Inverter(Func<BaseFbt<TBoard>, Status> func)
+        public static Status Inverter(TBoard board, Func<TBoard, Status> func)
         {
-            return func.Invoke(this) switch
+            return func.Invoke(board) switch
             {
                 Status.FAILURE => Status.SUCCESS,
                 Status.SUCCESS => Status.FAILURE,
@@ -58,14 +38,14 @@ namespace FunctionalBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Selector(params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status Selector(TBoard board, params Func<TBoard, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke(this);
+                var childstatus = f.Invoke(board);
 
                 switch (childstatus)
                 {
@@ -85,29 +65,14 @@ namespace FunctionalBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void VoidActions(params Action<BaseFbt<TBoard>>[] funcs)
-        {
-            if (funcs is null)
-                throw new ArgumentNullException(nameof(funcs));
-            
-            foreach (var f in funcs)
-                f.Invoke(this);
-        }
-
-        /// <summary>
-        /// Classic selector node
-        /// </summary>
-        /// <param name="funcs"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status StaticSelector(params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status StaticSelector(TBoard board, params Func<TBoard, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke(this);
+                var childstatus = f.Invoke(board);
 
                 switch (childstatus)
                 {
@@ -127,14 +92,14 @@ namespace FunctionalBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status Sequencer(params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status Sequencer(TBoard board, params Func<TBoard, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke(this);
+                var childstatus = f.Invoke(board);
 
                 switch (childstatus)
                 {
@@ -154,7 +119,7 @@ namespace FunctionalBT
         /// </summary>
         /// <param name="funcs"></param>
         /// <returns></returns>
-        public Status Parallel(ParallelPolicy policy, params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status Parallel(TBoard board, ParallelPolicy policy, params Func<TBoard, Status>[] funcs)
         {
             var hasRunning = false;
             var hasSuccess = false;
@@ -164,7 +129,7 @@ namespace FunctionalBT
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                switch (f.Invoke(this))
+                switch (f.Invoke(board))
                 {
                     case Status.RUNNING:
                         hasRunning = true;
@@ -196,11 +161,6 @@ namespace FunctionalBT
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
-
-        /*    }
-
-    public class AdvancedBT<TBoard> : TynyBT<TBoard>
-    {*/
         
         /// <summary>
         /// Classic Action node
@@ -209,65 +169,64 @@ namespace FunctionalBT
         /// <param name="returnStatus"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status VoidActions(Status returnStatus, params Action<BaseFbt<TBoard>>[] funcs)
+        public static Status VoidActions(TBoard board, Status returnStatus, params Action<TBoard>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                f.Invoke(this);
+                f.Invoke(board);
             
             return returnStatus;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalVoidActions(Func<BaseFbt<TBoard>, bool> condition, Status returnStatus, params Action<BaseFbt<TBoard>>[] funcs)
+        public static Status ConditionalVoidActions(TBoard board, Func<TBoard, bool> condition, Status returnStatus, params Action<TBoard>[] funcs)
         {
-            return condition.Invoke(this) 
-                ? VoidActions(returnStatus, funcs) 
+            return condition.Invoke(board) 
+                ? VoidActions(board, returnStatus, funcs) 
                 : Status.FAILURE;
         }
 
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalAction(Func<BaseFbt<TBoard>, bool> condition, Func<BaseFbt<TBoard>, Status> func)
+        public static Status ConditionalAction(TBoard board, Func<TBoard, bool> condition, Func<TBoard, Status> func)
         {
-            return condition.Invoke(this) 
-                ? Action(func) 
+            return condition.Invoke(board) 
+                ? Action(board, func) 
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalInverter(Func<BaseFbt<TBoard>, bool> condition, Func<BaseFbt<TBoard>, Status> func)
+        public static Status ConditionalInverter(TBoard board, Func<TBoard, bool> condition, Func<TBoard, Status> func)
         {
-            return condition.Invoke(this) 
-                ? Inverter(func) 
+            return condition.Invoke(board) 
+                ? Inverter(board, func) 
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalSelector(Func<BaseFbt<TBoard>, bool> condition, params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status ConditionalSelector(TBoard board, Func<TBoard, bool> condition, params Func<TBoard, Status>[] funcs)
         {
-            return condition.Invoke(this)
-                ? Selector(funcs)
+            return condition.Invoke(board)
+                ? Selector(board)
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalSequencer(Func<BaseFbt<TBoard>, bool> condition, params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status ConditionalSequencer(TBoard board, Func<TBoard, bool> condition, params Func<TBoard, Status>[] funcs)
         {
-            return condition.Invoke(this)
-                ? Sequencer(funcs)
+            return condition.Invoke(board)
+                ? Sequencer(board)
                 : Status.FAILURE;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status ConditionalParallel(Func<BaseFbt<TBoard>, bool> condition, ParallelPolicy policy, params Func<BaseFbt<TBoard>, Status>[] funcs)
+        public static Status ConditionalParallel(TBoard board, Func<TBoard, bool> condition, ParallelPolicy policy, params Func<TBoard, Status>[] funcs)
         {
-            return condition.Invoke(this)
-                ? Parallel(policy, funcs)
+            return condition.Invoke(board)
+                ? Parallel(board, policy, funcs)
                 : Status.FAILURE;
         }
     }
-
 }
