@@ -7,26 +7,22 @@ using Debug = UnityEngine.Debug;
 
 namespace Baltin.FBT
 {
-    public class ActorObject
+    public class ActorBoard
     {
-        public Vector3 playerPos;
-        public Vector3 playerWorldPos;
-        public float playerDistance;
-        public bool playerInRange;
-        public bool engaged;
-        public bool foo;
+        public Vector3 PlayerWorldPos;
+        public float PlayerDistance;
 
-        public FbtExamples go;
+        public FbtNpcView View;
 
-        public ActorObject(FbtExamples go)
+        public ActorBoard(FbtNpcView view)
         {
-            this.go = go;
+            View = view;
         }
     }
 
-    public class MyLaconicFBT : LaconicFbt <ActorObject>
+    public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
     {
-        public MyLaconicFBT(ActorObject obj) : base(obj) { }
+        public MyLaconicFunctionalBt(ActorBoard board) : base(board) { }
         
         public Status Execute()
         {
@@ -34,64 +30,61 @@ namespace Baltin.FBT
                 Selector(
                     _ => Action(
                         _ => SetColor(Color.grey)),
-                    _ => VoidActions(Status.SUCCESS,
-                        _ => Obj.go.SetColor(Color.red)));
+                    _ => VoidActions(Status.Success,
+                        _ => Board.View.SetColor(Color.red)));
         }
 
         Status SetColor(Color color)
         {
-            Obj.go.SetColor(color);
-            return Status.FAILURE;
+            Board.View.SetColor(color);
+            return Status.Failure;
         }
     }
     
-    public class MyStaticFbt : StaticFbt<ActorObject>
+    public class MyFunctionalBt : FunctionalBt<ActorBoard>
     {
-        private ActorObject obj;
+        private ActorBoard board;
 
-        public MyStaticFbt(ActorObject @object)
+        public MyFunctionalBt(ActorBoard board)
         {
-            obj = @object; 
+            this.board = board; 
         }
         
         public Status Execute()
         {
-            return
-                Selector(obj,
-                    static o => ConditionalVoidActions(o, 
-                        static o => o.playerDistance < 0.5f,
-                        Status.RUNNING,
-                        static o => o.go.SetColor(Color.red)),
-                    static o => ConditionalVoidActions(o,
-                        static o => o.playerDistance < 0.5f,
-                        Status.RUNNING,
-                        static o => o.go.SetColor(Color.red)));
+            return Selector(board,
+                    static b => ConditionalVoidActions(b, Status.Running,
+                        static b => b.PlayerDistance < 0.5f, 
+                        static b => b.View.SetColor(Color.red)),
+                    static b => ConditionalVoidActions(b, Status.Running,
+                        static b => b.PlayerDistance < 0.5f,
+                        static b => b.View.SetColor(Color.red)));
         }
     }
 
     [RequireComponent(typeof(Rigidbody))]
-    public class FbtExamples : MonoBehaviour
+    public class FbtNpcView : MonoBehaviour
     {
-        private BaseFbt<ActorObject> bt;
+        private FunctionalBtOld<ActorBoard> bt;
 
         public Status ExecuteTree()
         {
             return
                 bt.Selector(
                     static bt => bt.ConditionalVoidActions(
-                        static bt => bt.Board.playerDistance < 0.5f,
-                        Status.RUNNING,
-                        static bt => bt.Board.go.SetColor(Color.red)),
+                        static bt => bt.Board.PlayerDistance < 0.5f,
+                        Status.Running,
+                        static bt => bt.Board.View.SetColor(Color.red)),
                     static bt => bt.ConditionalVoidActions(
-                        static bt => bt.Board.playerDistance < 0.5f,
-                        Status.RUNNING,
-                        static bt => bt.Board.go.SetColor(Color.red)));
+                        static bt => bt.Board.PlayerDistance < 0.5f,
+                        Status.Running,
+                        static bt => bt.Board.View.SetColor(Color.red)));
         }
         
         private GameObject player;
 
-        //private ActorObject actorBoard;
-        private MyStaticFbt sbt;
+        //private ActorBoard actorBoard;
+        private MyFunctionalBt fbt;
         
         private Rigidbody body;
 
@@ -99,7 +92,7 @@ namespace Baltin.FBT
 
         private Guid guid;
 
-        private static List<FbtExamples> _allEnemies = new();
+        private static List<FbtNpcView> _allEnemies = new();
 
         [SerializeField] private float baseClosePlayerForce = 5f;
         [SerializeField] private float baseDistantPlayerForce = 0.5f;
@@ -109,8 +102,8 @@ namespace Baltin.FBT
 
         void Awake()
         {
-            //actorBoard = new ActorObject(this);
-            bt = new(new ActorObject(this));
+            //actorBoard = new ActorBoard(this);
+            bt = new(new ActorBoard(this));
             
             player = GameObject.FindGameObjectWithTag("Player");
             body = GetComponent<Rigidbody>();
@@ -125,7 +118,8 @@ namespace Baltin.FBT
         
         private void FixedUpdate()
         {
-            ExecuteTree();
+            fbt.Execute();
+            //ExecuteTree();
         }
         
         public void Start()
@@ -137,7 +131,8 @@ namespace Baltin.FBT
                 OnSnapshotFinished);
 
             for(var i=0;i<1000;i++)
-                ExecuteTree();
+                //ExecuteTree();
+                fbt.Execute();
             
             MemoryProfiler.TakeSnapshot(
                 Path.Combine(folderPath, $"MemorySnapshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_2.snap"),
@@ -158,62 +153,62 @@ namespace Baltin.FBT
         
         public Status ExplicitExecuteTree()
         {
-            Func<BaseFbt<ActorObject>, bool> func = 
-                new Func<BaseFbt<ActorObject>, bool>(bt => bt.Board.playerDistance < 0.5f);
+            Func<FunctionalBtOld<ActorBoard>, bool> func = 
+                new Func<FunctionalBtOld<ActorBoard>, bool>(bt => bt.Board.PlayerDistance < 0.5f);
             
             return
                 bt.ConditionalVoidActions(
                     func,
-                    Status.RUNNING,
-                    bt => bt.Board.go.SetColor(Color.red));
+                    Status.Running,
+                    bt => bt.Board.View.SetColor(Color.red));
         }      
         
-        public Status UpdateBlackboards(ActorObject @object)
+        public Status UpdateBlackboards(ActorBoard board)
         {
             Vector3 playerWorldPos = player.transform.position;
 
-            @object.playerWorldPos = playerWorldPos;
-            @object.playerDistance = Vector3.Distance(playerWorldPos, transform.position);
+            board.PlayerWorldPos = playerWorldPos;
+            board.PlayerDistance = Vector3.Distance(playerWorldPos, transform.position);
 
-            return Status.SUCCESS;
+            return Status.Success;
         }
 
-        public void StandAndFight(ActorObject @object)
+        public void StandAndFight(ActorBoard board)
         {
             transform.localScale = initialLocalScale * (1f + Mathf.Sin(Time.realtimeSinceStartup * 20) * 0.2f);
         }
 
-        public void JumpTowards(ActorObject @object)
+        public void JumpTowards(ActorBoard board)
         {
             transform.localScale = initialLocalScale * 1.1f;
 
             playerForce = baseClosePlayerForce;
         }
         
-        public void MoveAndShot(ActorObject @object)
+        public void MoveAndShot(ActorBoard board)
         {
             transform.localScale = initialLocalScale * (1f + Mathf.Sin(Time.realtimeSinceStartup * 10) * 0.1f);
 
             playerForce = baseDistantPlayerForce;
         }
 
-        public void Move(ActorObject @object)
+        public void Move(ActorBoard board)
         {
             transform.localScale = Vector3.Lerp(initialLocalScale, transform.localScale, 0.1f);
 
             playerForce = baseDistantPlayerForce;
         }
 
-        public void Stand(ActorObject @object)
+        public void Stand(ActorBoard board)
         {
             SetColor(Color.grey);
             
             playerForce = 0;
         }
 
-        public Status UpdateForce(ActorObject @object)
+        public Status UpdateForce(ActorBoard board)
         {
-            var force = (@object.playerWorldPos - transform.position) * (playerForce * Time.deltaTime);
+            var force = (board.PlayerWorldPos - transform.position) * (playerForce * Time.deltaTime);
 
             foreach (var enemy in _allEnemies)
                 if (enemy.guid != guid)
@@ -226,7 +221,7 @@ namespace Baltin.FBT
 
             body.AddForce(force, ForceMode.VelocityChange);
             
-            return Status.SUCCESS;
+            return Status.Success;
         }
 
         public void SetColor(Color color)

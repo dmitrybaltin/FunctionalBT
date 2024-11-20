@@ -3,38 +3,31 @@ using System.Runtime.CompilerServices;
 
 namespace Baltin.FBT
 {
-    public enum Status
-    {
-        Success = 0,
-        Failure = 1,
-        Running = 2,
-    }
-
-    public enum ParallelPolicy
-    {
-        RequireOneSuccess,
-        RequireAllSuccess
-    }
-
     /// <summary>
-    /// The best attempt at implementing the functional behavior tree pattern achieved so far
-    /// 1. Convenient for debugging, since you can set breakpoint both on tree nodes and on delegates passed as parameters
-    /// 2. Zero memory allocation, if you do not use closures in delegates
-    ///    (to ensure which it is recommended to use the 'static' modifier before declaring the delegate)
-    /// 3. Extremely fast, because here inside there are only the simplest conditions, the simplest loops and procedure calls
+    /// Early attempt to realize Functional BT pattern
+    /// This works, but I decided to use static functions to shorten the syntax of calling them.
+    /// I plan to delete this class
     /// </summary>
-    /// <typeparam name="T">A type of 'blackboard' that is an interface to the data and behavior of the controlled object.</typeparam>
-    public class FunctionalBt<T>
+    /// <typeparam name="TBoard"></typeparam>
+    [Obsolete("Early attempt to realize Functional BT pattern. I plan to delete it")]
+    public class FunctionalBtOld<TBoard>
     {
+        public TBoard Board { get; private set; }
+
+        public FunctionalBtOld(TBoard board)
+        {
+            Board = board;
+        }
+
         /// <summary>
         /// Classic Action node
         /// </summary>
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Action(T board, Func<T, Status> func)
+        public Status Action(Func<FunctionalBtOld<TBoard>, Status> func)
         {
-            return func.Invoke(board);
+            return func.Invoke(this);
         }
 
         /// <summary>
@@ -43,9 +36,9 @@ namespace Baltin.FBT
         /// <param name="func"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Inverter(T board, Func<T, Status> func)
+        public Status Inverter(Func<FunctionalBtOld<TBoard>, Status> func)
         {
-            return func.Invoke(board) switch
+            return func.Invoke(this) switch
             {
                 Status.Failure => Status.Success,
                 Status.Success => Status.Failure,
@@ -59,14 +52,14 @@ namespace Baltin.FBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Selector(T board, params Func<T, Status>[] funcs)
+        public Status Selector(params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke(board);
+                var childstatus = f.Invoke(this);
 
                 switch (childstatus)
                 {
@@ -81,19 +74,61 @@ namespace Baltin.FBT
         }
 
         /// <summary>
-        /// Classic sequencer node
+        /// Classic selector node
         /// </summary>
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board, params Func<T, Status>[] funcs)
+        public void VoidActions(params Action<FunctionalBtOld<TBoard>>[] funcs)
+        {
+            if (funcs is null)
+                throw new ArgumentNullException(nameof(funcs));
+            
+            foreach (var f in funcs)
+                f.Invoke(this);
+        }
+
+        /// <summary>
+        /// Classic selector node
+        /// </summary>
+        /// <param name="funcs"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Status StaticSelector(params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
             {
-                var childstatus = f.Invoke(board);
+                var childstatus = f.Invoke(this);
+
+                switch (childstatus)
+                {
+                    case Status.Running:
+                        return childstatus;
+                    case Status.Success:
+                        return childstatus;
+                }
+            }
+
+            return Status.Failure;
+        }
+        
+        /// <summary>
+        /// Classic sequencer node
+        /// </summary>
+        /// <param name="funcs"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Status Sequencer(params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
+        {
+            if (funcs is null)
+                throw new ArgumentNullException(nameof(funcs));
+            
+            foreach (var f in funcs)
+            {
+                var childstatus = f.Invoke(this);
 
                 switch (childstatus)
                 {
@@ -110,11 +145,10 @@ namespace Baltin.FBT
         /// <summary>
         /// It is not really parallel. All the nodes will execute sequential.
         /// But all the child nodes always executes independent of theirs results
-        /// Return value depends on the policy parameter and the results of children nodes 
         /// </summary>
         /// <param name="funcs"></param>
         /// <returns></returns>
-        public static Status Parallel(T board, ParallelPolicy policy, params Func<T, Status>[] funcs)
+        public Status Parallel(ParallelPolicy policy, params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
             var hasRunning = false;
             var hasSuccess = false;
@@ -124,7 +158,7 @@ namespace Baltin.FBT
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                switch (f.Invoke(board))
+                switch (f.Invoke(this))
                 {
                     case Status.Running:
                         hasRunning = true;
@@ -156,95 +190,78 @@ namespace Baltin.FBT
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
+
+        /*    }
+
+    public class AdvancedBT<TBoard> : TynyBT<TBoard>
+    {*/
         
         /// <summary>
-        /// Simplest action node, using set of Action<TBoard> delegates as input
-        /// All the children nodes are always executed 
+        /// Classic Action node
         /// </summary>
         /// <param name="func"></param>
         /// <param name="returnStatus"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status VoidActions(T board, Status returnStatus, params Action<T>[] funcs)
+        public Status VoidActions(Status returnStatus, params Action<FunctionalBtOld<TBoard>>[] funcs)
         {
             if (funcs is null)
                 throw new ArgumentNullException(nameof(funcs));
             
             foreach (var f in funcs)
-                f.Invoke(board);
+                f.Invoke(this);
             
             return returnStatus;
         }
 
-        #region  Conditional nodes
-        //Conditional nodes are syntax sugar that check condition before executing the action
-        //Every conditional node can be replaced by two nodes the first of them is an Action node containing the condition and wrapping the second mains node 
-        //But usually is more convenient to use one conditional node instead
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Status ConditionalVoidActions(Func<FunctionalBtOld<TBoard>, bool> condition, Status returnStatus, params Action<FunctionalBtOld<TBoard>>[] funcs)
+        {
+            return condition.Invoke(this) 
+                ? VoidActions(returnStatus, funcs) 
+                : Status.Failure;
+        }
+
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalAction(T board, Func<T, bool> condition, Func<T, Status> func)
+        public Status ConditionalAction(Func<FunctionalBtOld<TBoard>, bool> condition, Func<FunctionalBtOld<TBoard>, Status> func)
         {
-            return condition.Invoke(board) 
-                ? Action(board, func) 
+            return condition.Invoke(this) 
+                ? Action(func) 
                 : Status.Failure;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalInverter(
-            T board,
-            Func<T, bool> condition,
-            Func<T, Status> func)
+        public Status ConditionalInverter(Func<FunctionalBtOld<TBoard>, bool> condition, Func<FunctionalBtOld<TBoard>, Status> func)
         {
-            return condition.Invoke(board) 
-                ? Inverter(board, func) 
+            return condition.Invoke(this) 
+                ? Inverter(func) 
                 : Status.Failure;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSelector(
-            T board, 
-            Func<T, bool> condition, 
-            params Func<T, Status>[] funcs)
+        public Status ConditionalSelector(Func<FunctionalBtOld<TBoard>, bool> condition, params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke(board)
-                ? Selector(board)
+            return condition.Invoke(this)
+                ? Selector(funcs)
                 : Status.Failure;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSequencer(
-            T board,
-            Func<T, bool> condition, 
-            params Func<T, Status>[] funcs)
+        public Status ConditionalSequencer(Func<FunctionalBtOld<TBoard>, bool> condition, params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke(board)
-                ? Sequencer(board)
+            return condition.Invoke(this)
+                ? Sequencer(funcs)
                 : Status.Failure;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalParallel(T board,
-            ParallelPolicy policy,
-            Func<T, bool> condition,
-            params Func<T, Status>[] funcs)
+        public Status ConditionalParallel(Func<FunctionalBtOld<TBoard>, bool> condition, ParallelPolicy policy, params Func<FunctionalBtOld<TBoard>, Status>[] funcs)
         {
-            return condition.Invoke(board)
-                ? Parallel(board, policy, funcs)
+            return condition.Invoke(this)
+                ? Parallel(policy, funcs)
                 : Status.Failure;
         }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalVoidActions(
-            T board, 
-            Status returnStatus, 
-            Func<T, bool> condition,
-            params Action<T>[] funcs)
-        {
-            return condition.Invoke(board) 
-                ? VoidActions(board, returnStatus, funcs) 
-                : Status.Failure;
-        }
-        
-        #endregion
     }
+
 }
