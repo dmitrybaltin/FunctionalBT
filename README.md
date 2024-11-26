@@ -1,25 +1,33 @@
 # Functional Behavior Tree in C#
 
-This project provides a functional-style implementation of a behavior tree, designed for clear AI logic and convenient debugging.
+This project provides a high effitient functional-style implementation of a behavior tree, designed for clear AI logic, convenient debugging and extremally fast execution with zero memory allocation.
 
 ## Key Features
 
 1. **Concise Tree Definition**  
-   Behavior trees are defined directly in code using lambda expressions, resulting in clear and compact logic.   
+   Behavior trees are defined directly in code using functions calls and lambda expressions, resulting in clear and compact logic.   
 
 3. **Ease of Debugging**  
    Сode is easy to debug — the tree definition and execution code are the same, which means you can place breakpoints inside any anonymous delegate, and they will work correctly.  
-   No special complex "behaviour tree debugger" is required, you will use your favorite C# IDE for debugging.
+   No special complex "behaviour tree debugger" is required, you will use your favorite C# IDE.
 
-3. **No memory is allocated for tree structure**  
-   No memory is allocated for the tree structure because of the structure is embedded in the code itself.
+3. **Zero memory allocation**  
+   - No memory is allocated for the tree structure because it is embedded directly into the code.
+   - No memory is allocated for delegate instances, thanks to the use of static anonymous delegates.
+   - No memory is allocated for transferring parameters to functions due to the use of ReadonlySpan arguments (in C# 13) or functions with predefined argument sets (in earlier versions of C#).
+   - The only allocated field within the BT instance is a reference to the blackboard object.
+
+4. **High speed**  
+   - The implementation relies solely on function invocations, static delegates, conditional expressions, and loops.
+   - No expensive features are used (e.g., garbage collection, hash tables, closures, etc.).
 
 ## Usage Example
 
 Detailed example is inside the file 'FunctionalBehave.cs'. 
 Here’s a core of it, the tree definition.
 
-This example avoids closures and uses only anonymous delegates, making it relatively efficient in terms of memory usage.  
+static modifier before anonimous delegates garantee avoiding closures, making it extremally efficient in terms of memory usage.
+Function with multiple arguments (Selector, Sequence, etc ) avoids using "parans arrays" definition thats why noa momery allocated for these calls.
 
 As you can see bellow this code is easy to debug — you can place breakpoints inside any anonymous delegate, and they will work correctly.
 
@@ -41,10 +49,10 @@ namespace FunctionalBtTest
         public Status ExecuteTree()
         {
             return
-                bt.Parallel(ParallelPolicy.REQUIRE_ONE_SUCCESS,
+                bt.Parallel(bt, ParallelPolicy.REQUIRE_ONE_SUCCESS,
                     bt => bt.Board.go.UpdateBlackboards(bt.Board),
                     bt => bt.Selector(
-                        bt => bt.ConditionalVoidActions(
+                        bt => ConditionalVoidActions(
                             bt => bt.Board.playerDistance < 0.5f,
                             Status.RUNNING,
                             bt => bt.Board.go.SetColor(Color.red),
