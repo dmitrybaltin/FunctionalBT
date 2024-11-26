@@ -40,25 +40,30 @@ namespace Baltin.FBT
             return Status.Failure;
         }
     }
-    
-    public class MyFunctionalBt : FunctionalBt<ActorBoard>
+
+    public class MyFunctionalBt2 : LightestFbt<MyFunctionalBt2>
+    {
+        
+    }
+
+    public class MyFbt : ExtendedFbt<ActorBoard>
     {
         private ActorBoard board;
 
-        public MyFunctionalBt(ActorBoard board)
+        public MyFbt(ActorBoard board)
         {
             this.board = board; 
         }
         
-        public Status Execute()
+        public void Execute()
         {
-            return Selector(board,
-                    static b => ConditionalVoidActions(b, Status.Running,
-                        static b => b.PlayerDistance < 0.5f, 
-                        static b => b.View.SetColor(Color.red)),
-                    static b => ConditionalVoidActions(b, Status.Running,
-                        static b => b.PlayerDistance < 0.5f,
-                        static b => b.View.SetColor(Color.red)));
+            Selector(board,
+                static b => ConditionalVoidActions(b, Status.Running,
+                    static b => b.PlayerDistance < 0.5f,
+                    static b => b.View.SetColor(Color.red)),
+                static b => ConditionalVoidActions(b, Status.Running,
+                    static b => b.PlayerDistance < 0.5f,
+                    static b => b.View.SetColor(Color.red)));
         }
     }
 
@@ -84,7 +89,7 @@ namespace Baltin.FBT
         private GameObject player;
 
         //private ActorBoard actorBoard;
-        private MyFunctionalBt fbt;
+        private MyFbt fbt;
         
         private Rigidbody body;
 
