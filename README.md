@@ -21,7 +21,7 @@ The implementation has no strict dependency on Unity and can be integrated into 
 3. **Zero memory allocation**  
    No memory is allocated for the tree structure because it is embedded directly into the code.  
    No memory is allocated for delegate instances, thanks to the use of static anonymous delegates.  
-   No memory is allocated for transferring parameters to functions due to the use of ReadonlySpan arguments (in C# 13) or functions with predefined argument sets (in earlier versions of C#).
+   No memory is allocated for transferring parameters to functions due to the use of 'params Collection' arguments (in C# 13) or functions with predefined argument sets (in earlier versions of C#) instead of 'params arrays'.
 
 4. **High speed**  
    The implementation relies solely on function invocations, static delegates, conditional expressions, and loops.  
@@ -36,16 +36,9 @@ Detailed example is inside the file 'FunctionalBehave.cs'. Here’s a core of it
 ```csharp
 public class NpcFbt : ExtendedFbt<NpcBoard>
 {
-    private readonly NpcBoard _board;
-
-    public NpcFbt(NpcBoard board)
+    public static void Execute(NpcBoard board)
     {
-        _board = board;
-    }
-
-    public void Execute()
-    {
-        ConditionalAction(_board,
+        ConditionalAction(board,
             static b => !b.IsRagdollEnabled,
             static b => ConditionalAction(b,
                 static b => !b.IsAttacking,
@@ -64,8 +57,8 @@ public class NpcFbt : ExtendedFbt<NpcBoard>
 This tree definition implements a simple behavior for an NPC that moves to the player if they are within the NPC's sight, then attacks. Key points to note:  
 1. **Classes**
    1. **NpcBoard** is a custom class created by the user. It serves as the **blackboard** object and class contains the data and methods related to the NPC, which are controlled by the NpcFbt behavior tree.
-   1. **NpcFbt** is a custom class responsible for implementing the AI logic for this NPC. Derived from **ExtendedFbt**.
-   1. **NpcFbt** instance is stored in an external container (e.g., a MonoBehaviour in Unity), which invokes its **Execute()** method during each update cycle.
+   1. **NpcFbt** is a custom class responsible for implementing the AI logic for this NPC. Derived from **ExtendedFbt**. It contains only one static function Execute() and does not contain any data fields.
+   1. **NpcBoard** instance is stored in an external container (e.g., a MonoBehaviour in Unity), which calls **NpcBoard.Execute()** during the update cycle.
 1. **Methods**
    1. **Action()**, **Sequencer()**, **Selector()**, and **ConditionalAction()** are static methods of the ExtendedFbt class, implemented by this library.
    1. **b.FindTarget()**, **b.Attack()**, **b.Move()**, and **b.Idle()** are defined by the user inside NpcBoard class.
