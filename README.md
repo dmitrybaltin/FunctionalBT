@@ -38,53 +38,33 @@ Function with multiple arguments (Selector, Sequence, etc ) avoids using "parans
 As you can see bellow this code is easy to debug — you can place breakpoints inside any anonymous delegate, and they will work correctly.
 
 ```csharp
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using FunctionlBT;
-using UnityEngine;
-
-namespace FunctionalBtTest
+public class NpcFbt : ExtendedFbt<NpcBoard>
 {
-    //...
+    private readonly NpcBoard _board;
 
-    public class FunctionalBehave : MonoBehaviour
+    public NpcFbt(NpcBoard board)
     {
-        //...
+        _board = board;
+    }
 
-        public Status ExecuteTree()
-        {
-            return
-                bt.Parallel(bt, ParallelPolicy.REQUIRE_ONE_SUCCESS,
-                    bt => bt.Board.go.UpdateBlackboards(bt.Board),
-                    bt => bt.Selector(
-                        bt => ConditionalVoidActions(
-                            bt => bt.Board.playerDistance < 0.5f,
-                            Status.RUNNING,
-                            bt => bt.Board.go.SetColor(Color.red),
-                            bt => bt.Board.go.StandAndFight(bt.Board)),
-                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2f, Status.RUNNING, 
-                            bt => bt.Board.go.SetColor(Color.red),
-                            bt => bt.Board.go.JumpTowards(bt.Board)),
-                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 2.2f, Status.RUNNING, 
-                            bt => bt.Board.go.SetColor(Color.red),
-                            bt => bt.Board.go.MoveAndShot(bt.Board)),
-                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 4f, Status.RUNNING, 
-                            bt => bt.Board.go.SetColor(Color.magenta),
-                            bt => bt.Board.go.MoveAndShot(bt.Board)),
-                        bt => bt.ConditionalVoidActions(bt => bt.Board.playerDistance < 8f, Status.RUNNING, 
-                            bt => bt.Board.go.SetColor(Color.yellow),
-                            bt => bt.Board.go.Move(bt.Board)),
-                        bt => bt.VoidActions(Status.RUNNING, 
-                            bt => bt.Board.go.SetColor(Color.grey),
-                            bt => bt.Board.go.Stand(bt.Board))
-                    ),
-                    bt => bt.Board.go.UpdateForce(bt.Board)
-                );
-        }
+    public void Execute()
+    {
+        ConditionalAction(_board,
+            static b => !b.IsRagdollEnabled,
+            static b => ConditionalAction(b,
+                static b => !b.IsAttacking,
+                static b => Selector(b,
+                    static b => Sequencer(b, 
+                        static b => b.FindTarget(),
+                        static b => Selector(b,
+                            static b => b.Attack(), 
+                            static b => ConditionalAction(b,
+                                static b => b.NavigateRequired(),
+                                static b => b.Move()))),
+                    static bd => bd.Idle())));
+        _board.UpdateAnimationSpeed();
     }
 }
-        //...
 ```
 
 ![Example of debugging](functional_bt_example.jpg)
