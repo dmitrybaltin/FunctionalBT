@@ -58,7 +58,6 @@ public class NpcFbt : ExtendedFbt<NpcBoard>
                                 static b => b.NavigateRequired(),
                                 static b => b.Move()))),
                     static bd => bd.Idle())));
-        _board.UpdateAnimationSpeed();
     }
 }
 ```
