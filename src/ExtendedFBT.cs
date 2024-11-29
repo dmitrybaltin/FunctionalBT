@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Codice.Utils;
 using JetBrains.Annotations;
 
 namespace Baltin.FBT
@@ -8,21 +9,21 @@ namespace Baltin.FBT
     /// <summary>
     /// Extended version of Functional Behaviour tree containing some additional convenient nodes
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Blackboard type</typeparam>
     public class ExtendedFbt<T> : LightestFbt<T>
     {
         /// <summary>
-        /// Simplest action node, using set of Action<TBoard> delegates as input
+        /// Simplest action node, using set of Action<T> delegates as input
         /// All the children nodes are always executed 
         /// </summary>
-        /// <param name="func"></param>
-        /// <param name="returnStatus"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="returnStatus">Status to return at the end of all the actions</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status VoidActions(
-            T board, 
+        public static Status VoidActions(T board, 
             Status returnStatus, 
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Action<T>> funcs
 #else
             params Action<T>[] funcs
@@ -34,24 +35,40 @@ namespace Baltin.FBT
             
             return returnStatus;
         }
-#if !CSHARP13
+        
+#if !NET9_0_OR_GREATER
+        /// <summary>
+        /// Simplest action node, using set of Action<T> delegates as input
+        /// All the children nodes are always executed 
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="returnStatus">Status to return at the end of all the actions</param>
+        /// <param name="a1">Delegate receiving T and returning Status</param>
+        /// <param name="a2">Optional delegate receiving T and returning Status</param>
+        /// <param name="a3">Optional delegate receiving T and returning Status</param>
+        /// <param name="a4">Optional delegate receiving T and returning Status</param>
+        /// <param name="a5">Optional delegate receiving T and returning Status</param>
+        /// <param name="a6">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status VoidActions(T board,
             Status returnStatus,
-            Func<T, bool> condition,
             Action<T> a1,
-            Action<T> a2,
+            Action<T> a2 = null,
             Action<T> a3 = null,
             Action<T> a4 = null,
-            Action<T> a5 = null)
+            Action<T> a5 = null,
+            Action<T> a6 = null)
         {
             a1.Invoke(board);
-            a2.Invoke(board);
+            a2?.Invoke(board);
             a3?.Invoke(board);
             a4?.Invoke(board);
             a5?.Invoke(board);
-            
+            a6?.Invoke(board);
+
             return returnStatus;
+
         }
 #endif
         
@@ -61,34 +78,15 @@ namespace Baltin.FBT
         //But usually is more convenient to use one conditional node instead
         
         /// <summary>
-        /// 
+        /// Check condition before Secuencer
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="condition"></param>
-        /// <param name="func"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="func">Action returning Status</param>
         /// <param name="elseFunc"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalAction(
-            T board, 
-            Func<T, bool> condition, 
-            Func<T, Status> func,
-            [CanBeNull] Func<T, Status> elseFunc = null) 
-            => condition.Invoke(board) 
-                ? Action(board, func) 
-                : elseFunc != null ? Action(board, elseFunc) : Status.Failure;
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="board"></param>
-        /// <param name="condition"></param>
-        /// <param name="func"></param>
-        /// <param name="elseFunc"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalInverter(
-            T board,
+        public static Status ConditionalInverter(T board,
             Func<T, bool> condition,
             Func<T, Status> func, 
             [CanBeNull] Func<T, Status> elseFunc = null) 
@@ -97,17 +95,16 @@ namespace Baltin.FBT
                 : elseFunc != null ? Inverter(board, elseFunc) : Status.Failure;
         
         /// <summary>
-        /// 
+        /// Check condition before Selector 
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="condition"></param>
-        /// <param name="funcs"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSelector(
-            T board, 
+        public static Status ConditionalSelector(T board, 
             Func<T, bool> condition, 
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs
@@ -116,7 +113,19 @@ namespace Baltin.FBT
                 ? Selector(board, funcs)
                 : Status.Failure;
         
-#if !CSHARP13
+        /// <summary>
+        /// Check condition before Selector 
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
+#if !NET9_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status ConditionalSelector(T board,
             Func<T, bool> condition, 
@@ -124,24 +133,24 @@ namespace Baltin.FBT
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null) 
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null) 
             => condition.Invoke(board)
-                ? Selector(board, f1, f2, f3, f4, f5)
+                ? Selector(board, f1, f2, f3, f4, f5, f6)
                 : Status.Failure;
 #endif
         
         /// <summary>
-        /// 
+        /// Check condition before Sequencer
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="condition"></param>
-        /// <param name="funcs"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSequencer(
-            T board,
+        public static Status ConditionalSequencer(T board,
             Func<T, bool> condition, 
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs
@@ -150,7 +159,19 @@ namespace Baltin.FBT
                 ? Sequencer(board, funcs)
                 : Status.Failure;
 
-#if !CSHARP13
+#if !NET9_0_OR_GREATER
+        /// <summary>
+        /// Check condition before Sequencer
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status ConditionalSequencer(T board,
             Func<T, bool> condition, 
@@ -158,26 +179,26 @@ namespace Baltin.FBT
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null) 
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null) 
             => condition.Invoke(board)
-                ? Sequencer(board, f1, f2, f3, f4, f5)
+                ? Sequencer(board, f1, f2, f3, f4, f5, f6)
                 : Status.Failure;
 #endif
         
         /// <summary>
-        /// 
+        /// Check condition and then Execute Void actions
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="returnStatus"></param>
-        /// <param name="condition"></param>
-        /// <param name="funcs"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="returnStatus">Status to return at the end of all actions</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalVoidActions(
-            T board, 
+        public static Status ConditionalVoidActions(T board, 
             Status returnStatus, 
             Func<T, bool> condition,
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Action<T>> funcs
 #else
             params Action<T>[] funcs
@@ -189,18 +210,32 @@ namespace Baltin.FBT
                 : Status.Failure;
         }
 
-#if !CSHARP13
+#if !NET9_0_OR_GREATER
+        /// <summary>
+        /// Check condition and then Execute Void actions
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="returnStatus">Status to return at the end of all actions</param>
+        /// <param name="a1">Delegate receiving T and returning Status</param>
+        /// <param name="a2">Optional delegate receiving T and returning Status</param>
+        /// <param name="a3">Optional delegate receiving T and returning Status</param>
+        /// <param name="a4">Optional delegate receiving T and returning Status</param>
+        /// <param name="a5">Optional delegate receiving T and returning Status</param>
+        /// <param name="a6">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status ConditionalVoidActions(T board,
             Func<T, bool> condition, 
             Status returnStatus, 
             Action<T> a1,
-            Action<T> a2,
+            Action<T> a2 = null,
             Action<T> a3 = null,
             Action<T> a4 = null,
-            Action<T> a5 = null) 
+            Action<T> a5 = null,
+            Action<T> a6 = null) 
             => condition.Invoke(board)
-                ? VoidActions(board, returnStatus, a1, a2, a3, a4, a5)
+                ? VoidActions(board, returnStatus, a1, a2, a3, a4, a5, a6)
                 : Status.Failure;
 #endif
         

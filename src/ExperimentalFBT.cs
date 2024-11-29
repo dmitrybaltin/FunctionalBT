@@ -17,7 +17,7 @@ namespace Baltin.FBT
     /// <summary>
     /// Here are some controversial nodes that I am not sure are necessary.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Blackboard type</typeparam>
     public class ExperimentalFbt<T> : ExtendedFbt<T> 
     {
         /// <summary>
@@ -25,12 +25,13 @@ namespace Baltin.FBT
         /// But all the child nodes always executes independent of theirs results
         /// Return value depends on the policy parameter and the results of children nodes 
         /// </summary>
+        /// <param name="board">Blackboard object</param>
         /// <param name="funcs"></param>
         /// <returns></returns>
         public static Status Parallel(
             T board, 
             ParallelPolicy policy, 
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs
@@ -84,7 +85,7 @@ namespace Baltin.FBT
         /// <summary>
         /// Parallel node with precondition
         /// </summary>
-        /// <param name="board"></param>
+        /// <param name="board">Blackboard object</param>
         /// <param name="policy"></param>
         /// <param name="condition"></param>
         /// <param name="funcs"></param>
@@ -93,7 +94,7 @@ namespace Baltin.FBT
         public static Status ConditionalParallel(T board,
             ParallelPolicy policy,
             Func<T, bool> condition,
-#if CSHARP13
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs

@@ -25,18 +25,18 @@ namespace Baltin.FBT
         /// <summary>
         /// Classic Action node
         /// </summary>
-        /// <param name="func"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Action(T board, Func<T, Status> func)
-        {
-            return func.Invoke(board);
-        }
+        public static Status Action(T board, Func<T, Status> func) 
+            => func.Invoke(board);
 
         /// <summary>
         /// Classic inverter node
         /// </summary>
-        /// <param name="func"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Inverter(T board, Func<T, Status> func)
@@ -48,16 +48,43 @@ namespace Baltin.FBT
                 _ => Status.Running,
             };
         }
+        
+        /// <summary>
+        /// Check condition before Action
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="func">Action if condition is true. Delegates receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status ConditionalAction(T board, 
+            Func<T, bool> condition, 
+            Func<T, Status> func) 
+            => condition.Invoke(board) ? Action(board, func) : Status.Failure;
+
+        /// <summary>
+        /// Check condition before Action
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="func">Action if condition is true. Delegate receiving T and returning Status</param>
+        /// <param name="elseFunc">Action if condition is false. Delegate receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status ConditionalAction(T board, 
+            Func<T, bool> condition, 
+            Func<T, Status> func,
+            Func<T, Status> elseFunc) 
+            => condition.Invoke(board) ? Action(board, func) : Action(board, elseFunc);
 
         /// <summary>
         /// Classic selector node
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="funcs"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Actions returning Status</param>
         /// <returns></returns>
-        public static Status Selector(
-            T board, 
-#if CSHARP13
+        public static Status Selector(T board, 
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs
@@ -73,16 +100,17 @@ namespace Baltin.FBT
             return Status.Failure;
         }
 
-#if !CSHARP13
+#if !NET9_0_OR_GREATER
         /// <summary>
         /// Classic selector node
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="f1"></param>
-        /// <param name="f2"></param>
-        /// <param name="f3"></param>
-        /// <param name="f4"></param>
-        /// <param name="f5"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Selector(T board,
@@ -90,13 +118,15 @@ namespace Baltin.FBT
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null)
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null)
         {
             var s = f1?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f2?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f3?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f4?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f5?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f6?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
 
             return s;
         }
@@ -105,13 +135,12 @@ namespace Baltin.FBT
         /// <summary>
         /// Classic sequencer node
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="funcs"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(
-            T board, 
-#if CSHARP13
+        public static Status Sequencer(T board, 
+#if NET9_0_OR_GREATER
             params ReadOnlySpan<Func<T, Status>> funcs
 #else
             params Func<T, Status>[] funcs
@@ -128,16 +157,17 @@ namespace Baltin.FBT
             return Status.Success;
         }
         
-#if !CSHARP13
+#if !NET9_0_OR_GREATER
         /// <summary>
-        /// Classic selector node
+        /// Classic sequencer node
         /// </summary>
-        /// <param name="board"></param>
-        /// <param name="f1"></param>
-        /// <param name="f2"></param>
-        /// <param name="f3"></param>
-        /// <param name="f4"></param>
-        /// <param name="f5"></param>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Sequencer(T board,
@@ -145,13 +175,15 @@ namespace Baltin.FBT
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null)
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null)
         {
             var s = f1?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f2?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f3?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f4?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f5?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
 
             return s;
         }

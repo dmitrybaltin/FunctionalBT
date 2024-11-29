@@ -48,14 +48,7 @@ namespace Baltin.FBT
 
     public class MyFbt : ExtendedFbt<ActorBoard>
     {
-        private ActorBoard board;
-
-        public MyFbt(ActorBoard board)
-        {
-            this.board = board; 
-        }
-        
-        public void Execute()
+        public static void Execute(ActorBoard board)
         {
             Selector(board,
                 static b => ConditionalVoidActions(b, Status.Running,
@@ -72,24 +65,9 @@ namespace Baltin.FBT
     {
         private FunctionalBtOld<ActorBoard> bt;
 
-        public Status ExecuteTree()
-        {
-            return
-                bt.Selector(
-                    static bt => bt.ConditionalVoidActions(
-                        static bt => bt.Board.PlayerDistance < 0.5f,
-                        Status.Running,
-                        static bt => bt.Board.View.SetColor(Color.red)),
-                    static bt => bt.ConditionalVoidActions(
-                        static bt => bt.Board.PlayerDistance < 0.5f,
-                        Status.Running,
-                        static bt => bt.Board.View.SetColor(Color.red)));
-        }
-        
         private GameObject player;
 
-        //private ActorBoard actorBoard;
-        private MyFbt fbt;
+        private ActorBoard actorBoard;
         
         private Rigidbody body;
 
@@ -121,12 +99,6 @@ namespace Baltin.FBT
             _allEnemies.Add(this);
         }
         
-        private void FixedUpdate()
-        {
-            fbt.Execute();
-            //ExecuteTree();
-        }
-        
         public void Start()
         {
             var folderPath = Directory.GetParent(Application.dataPath).FullName + "/MemoryCaptures";
@@ -137,11 +109,31 @@ namespace Baltin.FBT
 
             for(var i=0;i<1000;i++)
                 //ExecuteTree();
-                fbt.Execute();
+                MyFbt.Execute(actorBoard);
             
             MemoryProfiler.TakeSnapshot(
                 Path.Combine(folderPath, $"MemorySnapshot_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}_2.snap"),
                 OnSnapshotFinished);
+        }
+        
+        public Status ExecuteTree()
+        {
+            return
+                bt.Selector(
+                    static bt => bt.ConditionalVoidActions(
+                        static bt => bt.Board.PlayerDistance < 0.5f,
+                        Status.Running,
+                        static bt => bt.Board.View.SetColor(Color.red)),
+                    static bt => bt.ConditionalVoidActions(
+                        static bt => bt.Board.PlayerDistance < 0.5f,
+                        Status.Running,
+                        static bt => bt.Board.View.SetColor(Color.red)));
+        }
+        
+        private void FixedUpdate()
+        {
+            MyFbt.Execute(actorBoard);
+            //ExecuteTree();
         }
         
         private void OnSnapshotFinished(string path, bool success)
