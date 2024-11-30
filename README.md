@@ -36,9 +36,9 @@ Detailed example is inside the file 'FunctionalBehave.cs'. Here’s a core of it
 ```csharp
 public class NpcFbt : ExtendedFbt<NpcBoard>
 {
-    public static void Execute(NpcBoard board)
+    public static void Execute(NpcBoard b)
     {
-        ConditionalAction(board,
+        ConditionalAction(b,
             static b => !b.IsRagdollEnabled,
             static b => ConditionalAction(b,
                 static b => !b.IsAttacking,
@@ -65,7 +65,7 @@ This tree definition implements a simple behavior for an NPC that moves to the p
 1. **Memory allocation**
    1. **static** modifier before anonymous delegates guarantee avoiding closures, making them extremely efficient in terms of memory usage because no memory allocation required when using these delegates.
       1. In each lambda function, only a single internal variable, **b**, is used, and there are no closures.
-      2. All **b** variables point to the same **NpcBoard** instance (that is **NpcFbt._board**), but they are independent variables.
+      2. All **b** variables point to the same **NpcBoard** instance received as an argument, but they are independent variables.
       3. Every tree node function receives the blackboard as a first parameter and forwards it to child nodes through delegates.
       4. Any accidental reference to a variable from a different lambda function would create a closure, causing memory allocation, but the **static** modifier prevents such situations.
    1. Functions with multiple arguments (**Selector**, **Sequence**, etc) avoid using **params arrays** definition that's why no memory allocated for these calls.
