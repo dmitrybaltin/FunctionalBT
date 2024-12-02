@@ -1,6 +1,6 @@
 # Functional Behavior Tree in C#
 
-This project offers a highly efficient, functional-style implementation of behavior tree in C#. It is designed to enable clear AI logic, convenient debugging, and fast execution with zero memory allocation.
+Highly efficient, functional-style implementation of behavior tree in C# designed to enable clear AI logic, convenient debugging, and fast execution with zero memory allocation.
 
 The codebase is minimal, simple, and easy to understand. Once familiarized with the approach, you can quickly reproduce or adapt it.  
 Rather than a library, this solution is better described as a design pattern.
@@ -14,7 +14,7 @@ The implementation has no strict dependency on Unity and can be integrated into 
 1. **Clear and Concise Behavior Tree Definition**  
    Behavior trees are defined directly in code using functions calls and lambda expressions, resulting in clear and compact logic.   
 
-3. **Ease of Debugging**  
+2. **Ease of Debugging**  
    The tree definition and execution code are the same, which means you can place breakpoints inside any anonymous delegate, and they will work correctly.  
    No special complex "behaviour tree debugger" is required, you will use your favorite C# IDE.
 
@@ -90,8 +90,8 @@ Below is an example implementation of a classic behavior tree node: the Selector
 ```
 As you can see, the code is minimal and contains only the core logic. Each behavior tree node is a static function rather than an object, reducing overhead.
 
-Note
-One caveat: the provided **Selector()** function leverages C# 13 features - the **params Collections** feature. This allows passing parameters to the function using **ReadOnlySpan** instead of a traditional array, completely avoiding dynamic memory allocation.
+### Note
+The provided **Selector()** function leverages C# 13 features - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional array, completely avoiding dynamic memory allocation.
 However, since C# 13 support in Unity might not be available for several years, the library also includes versions of the behavior tree functions compatible with earlier C# versions. These implementations are slightly more verbose but remain simple, clear, and allocation-free.
 
 ## Requirements
