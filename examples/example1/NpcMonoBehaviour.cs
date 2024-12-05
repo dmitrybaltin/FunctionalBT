@@ -1,19 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Baltin.FBT.Example
 {
     [Serializable]
-    public class SwarmConfig
+    public class NpcConfig
     {
         [SerializeField] public float baseClosePlayerForce = 5f;
         [SerializeField] public float baseDistantPlayerForce = 0.5f;
-        [SerializeField] public float baseEnemyForce = -1f;
     }
     
-    public class ExampleFBT : ExtendedFbt<NpcBoard>
+    public class NpcFbt : ExtendedFbt<NpcBoard>
     {
         public static void Execute(NpcBoard b)
         {
@@ -47,7 +45,7 @@ namespace Baltin.FBT.Example
 
     public class NpcBoard
     {
-        private SwarmConfig config;
+        private NpcConfig config;
         
         public readonly int InstanceId; 
         
@@ -61,7 +59,7 @@ namespace Baltin.FBT.Example
 
         private Vector3 playerWorldPos;
 
-        public NpcBoard(SwarmConfig config, Rigidbody body, MeshRenderer meshRenderer, Transform player)
+        public NpcBoard(NpcConfig config, Rigidbody body, MeshRenderer meshRenderer, Transform player)
         {
             this.config = config;
             this.player = player;
@@ -159,9 +157,9 @@ namespace Baltin.FBT.Example
     
     
     [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider)), RequireComponent(typeof(MeshRenderer))]
-    public class FbtSwarmAI : MonoBehaviour
+    public class NpcMonoBehaviour : MonoBehaviour
     {
-        [SerializeField] private SwarmConfig config;
+        [SerializeField] private NpcConfig config;
 
         private NpcBoard npcBoard;
 
@@ -179,7 +177,7 @@ namespace Baltin.FBT.Example
 
         void Update()
         {
-            ExampleFBT.Execute(npcBoard);
+            NpcFbt.Execute(npcBoard);
         }
     }
 

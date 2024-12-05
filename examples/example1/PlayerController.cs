@@ -1,12 +1,12 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider))]
-public class NPBehaveExampleMouseController : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     private Camera mainCamera;
     private Rigidbody body;
 
-    [SerializeField] private float Kp; 
+    [SerializeField] private float Kp = 0.5f; 
     private const bool topDown = false;
 
     void Start()

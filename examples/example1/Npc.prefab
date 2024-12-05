@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 13534478}
   - component: {fileID: 2332098}
   - component: {fileID: 1442311000749499533}
-  - component: {fileID: 1322593512197563539}
+  - component: {fileID: 2288986519803260892}
   m_Layer: 0
-  m_Name: FbtSwarmEnemy
+  m_Name: Npc
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,7 +134,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 120
   m_CollisionDetection: 2
---- !u!114 &1322593512197563539
+--- !u!114 &2288986519803260892
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
