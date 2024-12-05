@@ -130,8 +130,7 @@ namespace Baltin.FBT
 
             return s;
         }
-#endif
-
+#else
         /// <summary>
         /// Classic sequencer node
         /// </summary>
@@ -140,11 +139,7 @@ namespace Baltin.FBT
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Sequencer(T board, 
-#if NET9_0_OR_GREATER
-            params ReadOnlySpan<Func<T, Status>> funcs
-#else
             params Func<T, Status>[] funcs
-#endif
             )
         {
             foreach (var f in funcs)
@@ -156,6 +151,7 @@ namespace Baltin.FBT
 
             return Status.Success;
         }
+#endif
         
 #if !NET9_0_OR_GREATER
         /// <summary>
