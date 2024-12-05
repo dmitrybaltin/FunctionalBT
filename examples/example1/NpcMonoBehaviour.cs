@@ -4,6 +4,31 @@ using UnityEngine;
 
 namespace Baltin.FBT.Example
 {
+    [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider)), RequireComponent(typeof(MeshRenderer))]
+    public class NpcMonoBehaviour : MonoBehaviour
+    {
+        [SerializeField] private NpcConfig config;
+
+        private NpcBoard npcBoard;
+
+        void Start()
+        {
+            Transform player = GameObject.FindGameObjectWithTag("Player").transform;
+            
+            npcBoard = new NpcBoard(
+                config,
+                GetComponent<Rigidbody>(), 
+                GetComponent<MeshRenderer>(),
+                player);
+            name = "Npc " + npcBoard.InstanceId;
+        }
+
+        void Update()
+        {
+            NpcFbt.Execute(npcBoard);
+        }
+    }
+
     [Serializable]
     public class NpcConfig
     {
@@ -155,30 +180,4 @@ namespace Baltin.FBT.Example
         }
     }
     
-    
-    [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider)), RequireComponent(typeof(MeshRenderer))]
-    public class NpcMonoBehaviour : MonoBehaviour
-    {
-        [SerializeField] private NpcConfig config;
-
-        private NpcBoard npcBoard;
-
-        void Start()
-        {
-            Transform player = GameObject.FindGameObjectWithTag("Player").transform;
-            
-            npcBoard = new NpcBoard(
-                config,
-                GetComponent<Rigidbody>(), 
-                GetComponent<MeshRenderer>(),
-                player);
-            name = "Npc " + npcBoard.InstanceId;
-        }
-
-        void Update()
-        {
-            NpcFbt.Execute(npcBoard);
-        }
-    }
-
 }
