@@ -5,6 +5,7 @@ public class PlayerController : MonoBehaviour
 {
     private Camera mainCamera;
     private Rigidbody body;
+    private MeshRenderer meshRenderer;
 
     [SerializeField] private float Kp = 0.5f; 
 
@@ -12,6 +13,9 @@ public class PlayerController : MonoBehaviour
     {
         mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         body = GetComponent<Rigidbody>();
+
+        meshRenderer = GetComponent<MeshRenderer>();
+        meshRenderer.material.SetColor("_Color", Color.green);
     }
 
     void Update()

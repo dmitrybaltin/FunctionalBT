@@ -35,7 +35,7 @@ namespace Baltin.FBT
         /// <param name="a">Delegate receiving T and returning Status</param>
         /// <returns>If the condition is false then return Failure. Else return the value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfVoidAction(T board,
+        public static Status VoidAction(T board,
             Status returnStatus,
             Func<T, bool> condition, 
             Action<T> a)
@@ -58,7 +58,7 @@ namespace Baltin.FBT
         /// <param name="elseA">Alternative action if the condition is false</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfVoidAction(T board,
+        public static Status VoidAction(T board,
             Status returnStatus,
             Func<T, bool> condition, 
             Action<T> a, 
@@ -119,7 +119,7 @@ namespace Baltin.FBT
         /// <param name="elseFunc"></param>
         /// <returns>If the condition is false return Failure. Else return inverted value of the func</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfInverter(T board,
+        public static Status Inverter(T board,
             Func<T, bool> condition,
             Func<T, Status> func, 
             Func<T, Status> elseFunc = null) 
@@ -143,7 +143,7 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Selector</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfSelector(T board,
+        public static Status Selector(T board,
             Func<T, bool> condition, 
             Func<T, Status> f1,
             Func<T, Status> f2,
@@ -194,7 +194,7 @@ namespace Baltin.FBT
         /// <param name="a6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfVoidActions(T board,
+        public static Status VoidActions(T board,
             Func<T, bool> condition, 
             Status returnStatus, 
             Action<T> a1,
@@ -238,7 +238,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfSelector(T board, 
+        public static Status Selector(T board, 
             Func<T, bool> condition, 
             params ReadOnlySpan<Func<T, Status>> funcs
         ) => condition.Invoke(board)
@@ -253,7 +253,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfSequencer(T board,
+        public static Status Sequencer(T board,
             Func<T, bool> condition, 
             params ReadOnlySpan<Func<T, Status>> funcs
         ) => condition.Invoke(board)
@@ -269,7 +269,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfVoidActions(T board, 
+        public static Status VoidActions(T board, 
             Status returnStatus, 
             Func<T, bool> condition,
             params ReadOnlySpan<Action<T>> funcs
