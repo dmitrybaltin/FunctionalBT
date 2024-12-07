@@ -168,7 +168,7 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Sequencer</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfSequencer(T board,
+        public static Status Sequencer(T board,
             Func<T, bool> condition, 
             Func<T, Status> f1,
             Func<T, Status> f2,
