@@ -155,7 +155,7 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfParallel(T board,
+        public static Status ConditionalParallel(T board,
             ParallelPolicy policy,
             Func<T, bool> condition,
             Func<T, Status> f1,
@@ -177,7 +177,7 @@ namespace Baltin.FBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status IfParallel(T board,
+        public static Status ConditionalParallel(T board,
             ParallelPolicy policy,
             Func<T, bool> condition,
             params ReadOnlySpan<Func<T, Status>> funcs)

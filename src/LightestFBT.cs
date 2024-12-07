@@ -28,6 +28,10 @@ namespace Baltin.FBT
                 _ => Status.Running,
             };
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status ToStatus(this bool value) => 
+            value ? Status.Success : Status.Failure;
     }
     
     /// <summary>
