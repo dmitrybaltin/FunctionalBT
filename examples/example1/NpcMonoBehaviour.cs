@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using PlasticPipe.Server;
 using UnityEngine;
 
 namespace Baltin.FBT.Example
@@ -38,60 +39,55 @@ namespace Baltin.FBT.Example
     
     public class NpcFbt : ExtendedFbt<NpcBoard>
     {
-        public static void Execute(NpcBoard b)
-        {
+        public static void Execute(NpcBoard b) =>
             Sequencer(b,
                 static b => b.PreUpdate(),
                 static b => Selector(b,
-                    static b => ConditionalSequencer(b,
+                    static b => ConditionalSequencer(b, 
                         static b => b.PlayerDistance < 1f,
                         static b => b.SetColor(Color.red),
                         static b => b.OscillateScale(1, 1.5f, 0.25f),
-                        static b => b.StandAndFight()),
-                    static b => ConditionalSequencer(b,
-                        static b => b.PlayerDistance < 2.5f,
-                        static b => b.SetColor(Color.red),
-                        static b => b.SetScale(1f, 0.1f),
-                        static b => b.JumpTowards()),
-                    static b => ConditionalSequencer(b,
-                        static b => b.PlayerDistance < 5f,
+                        static b => b.AddForce(b.Config.baseClosePlayerForce)),
+                    static b => ConditionalSequencer(b, 
+                        static b => b.PlayerDistance < 3f,
                         static b => b.SetColor(Color.magenta),
-                        static b => b.OscillateScale(1, 1.2f, 0.5f),
-                        static b => b.MoveTowardsAndShot()),
-                    static b => ConditionalSequencer(b,
-                        static b => b.PlayerDistance < 10f,
+                        static b => b.SetScale(1f, 0.1f),
+                        static b => b.AddForce(b.Config.baseClosePlayerForce)),
+                    static b => ConditionalSequencer(b, 
+                        static b => b.PlayerDistance < 8f,
                         static b => b.SetColor(Color.yellow),
                         static b => b.SetScale(1f, 1f),
-                        static b => b.MoveTowards()),
+                        static b => b.AddForce(b.Config.baseDistantPlayerForce)),
                     static b => b.SetColor(Color.grey),
                     static b => b.SetScale(1f, 1f)));
-        }
     }
 
     public class NpcBoard
     {
-        private NpcConfig config;
+        private static readonly int ColorPropertyID = Shader.PropertyToID("_Color");
+        
+        public NpcConfig Config;
         
         public readonly int InstanceId; 
         
         public float PlayerDistance;
 
-        private readonly Rigidbody body;
-        private readonly MeshRenderer meshRenderer;
-        private readonly Transform player; 
+        private readonly Rigidbody _body;
+        private readonly MeshRenderer _meshRenderer;
+        private readonly Transform _player; 
         
-        private readonly Vector3 initialLocalScale;
+        private readonly Vector3 _initialLocalScale;
 
-        private Vector3 playerWorldPos;
+        private Vector3 _playerWorldPos;
 
         public NpcBoard(NpcConfig config, Rigidbody body, MeshRenderer meshRenderer, Transform player)
         {
-            this.config = config;
-            this.player = player;
-            this.body = body;
-            this.meshRenderer = meshRenderer;
+            this.Config = config;
+            this._player = player;
+            this._body = body;
+            this._meshRenderer = meshRenderer;
            
-            initialLocalScale = body.transform.localScale;
+            _initialLocalScale = body.transform.localScale;
             
             InstanceId = body.GetInstanceID();
         }
@@ -99,39 +95,10 @@ namespace Baltin.FBT.Example
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Status PreUpdate()
         {
-            playerWorldPos = player.position;
-            PlayerDistance = Vector3.Distance(playerWorldPos, body.worldCenterOfMass);
+            _playerWorldPos = _player.position;
+            PlayerDistance = Vector3.Distance(_playerWorldPos, _body.worldCenterOfMass);
 
             return Status.Success;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status StandAndFight()
-        {
-            body.transform.localScale = initialLocalScale * (1f + Mathf.Sin(Time.realtimeSinceStartup * 20) * 0.2f);
-            return Status.Running;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status MoveTowardsAndShot()
-        {
-            AddForce(config.baseDistantPlayerForce);
-            return Status.Running;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status JumpTowards()
-        {
-            AddForce(config.baseClosePlayerForce);
-            return Status.Running;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status MoveTowards()
-        {
-            AddForce(config.baseDistantPlayerForce);
-            
-            return Status.Running;
         }
 
         public Status OscillateScale(float fromScale, float toScale, float period)
@@ -144,8 +111,8 @@ namespace Baltin.FBT.Example
 
             var triangleWave = Mathf.PingPong(Time.realtimeSinceStartup / period, 1f);
 
-            body.transform.localScale = initialLocalScale * Mathf.Lerp(fromScale, toScale, triangleWave);
-
+            _body.transform.localScale = _initialLocalScale * Mathf.Lerp(fromScale, toScale, triangleWave);
+            
             return Status.Success;
         }
 
@@ -155,29 +122,28 @@ namespace Baltin.FBT.Example
                 throw new ArgumentException("Scale values must be non-negative.");
 
             if (smoothTime < Time.deltaTime)
-                body.transform.localScale = initialLocalScale * scale;
+                _body.transform.localScale = _initialLocalScale * scale;
             else
-                body.transform.localScale = Vector3.Lerp(
-                    body.transform.localScale,
-                    initialLocalScale * scale,
+                _body.transform.localScale = Vector3.Lerp(
+                    _body.transform.localScale,
+                    _initialLocalScale * scale,
                     Time.deltaTime/smoothTime);
-
             return Status.Success;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Status SetColor(Color color)
         {
-            meshRenderer.material.SetColor("_Color", color);
+            _meshRenderer.material.SetColor(ColorPropertyID, color);
             return Status.Success;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddForce(float playerForce)
+        public Status AddForce(float playerForce)
         {
-            var force = (playerWorldPos - body.worldCenterOfMass) * (playerForce * Time.deltaTime);
-            body.AddForce(force, ForceMode.VelocityChange);
+            var force = (_playerWorldPos - _body.worldCenterOfMass) * (playerForce * Time.deltaTime);
+            _body.AddForce(force, ForceMode.VelocityChange);
+            return Status.Success;
         }
     }
-    
 }

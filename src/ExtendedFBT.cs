@@ -248,8 +248,8 @@ namespace Baltin.FBT
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status ConditionalVoidActions(T board,
-            Func<T, bool> condition, 
             Status returnStatus, 
+            Func<T, bool> condition, 
             Action<T> a1,
             Action<T> a2,
             Action<T> a3 = null,
@@ -322,7 +322,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status VoidActions(T board, 
+        public static Status ConditionalVoidActions(T board, 
             Status returnStatus, 
             Func<T, bool> condition,
             params ReadOnlySpan<Action<T>> funcs
