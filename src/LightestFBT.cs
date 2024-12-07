@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using JetBrains.Annotations;
 
 namespace Baltin.FBT
 {
@@ -12,26 +11,35 @@ namespace Baltin.FBT
         Running = 2,
     }
 
+    public static class StatusExtensions
+    {
+        /// <summary>
+        /// Invert Status
+        /// </summary>
+        /// <param name="status">Source status to invert</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Invert(this Status status)
+        {
+            return status switch
+            {
+                Status.Failure => Status.Success,
+                Status.Success => Status.Failure,
+                _ => Status.Running,
+            };
+        }
+    }
+    
     /// <summary>
-    /// The best attempt at implementing the functional behavior tree pattern achieved so far
+    /// Functional Behavior Tree pattern
     /// 1. Convenient for debugging, since you can set breakpoint both on tree nodes and on delegates passed as parameters
     /// 2. Zero memory allocation, if you do not use closures in delegates
     ///    (to ensure which it is recommended to use the 'static' modifier before declaring the delegate)
-    /// 3. Extremely fast, because here inside there are only the simplest conditions, the simplest loops and procedure calls
+    /// 3. Extremely fast, because here inside there are only the simplest conditions, loops and procedure calls
     /// </summary>
     /// <typeparam name="T">A type of 'blackboard' that is an interface to the data and behavior of the controlled object.</typeparam>
     public class LightestFbt<T>
     {
-        /// <summary>
-        /// Classic Action node
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="func">Delegate receiving T and returning Status</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Action(T board, Func<T, Status> func) 
-            => func.Invoke(board);
-
         /// <summary>
         /// Classic inverter node
         /// </summary>
@@ -40,65 +48,31 @@ namespace Baltin.FBT
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Inverter(T board, Func<T, Status> func)
-        {
-            return func.Invoke(board) switch
-            {
-                Status.Failure => Status.Success,
-                Status.Success => Status.Failure,
-                _ => Status.Running,
-            };
-        }
+            => func.Invoke(board).Invert();
         
         /// <summary>
-        /// Check condition before Action
+        /// Execute the given func delegate if the given condition is true 
         /// </summary>
         /// <param name="board">Blackboard object</param>
         /// <param name="condition">Condition given as a delegate returning true</param>
-        /// <param name="func">Action if condition is true. Delegates receiving T and returning Status</param>
+        /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalAction(T board, 
-            Func<T, bool> condition, 
-            Func<T, Status> func) 
-            => condition.Invoke(board) ? Action(board, func) : Status.Failure;
+        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func) 
+            => condition.Invoke(board) ? func.Invoke(board): Status.Failure;
 
         /// <summary>
-        /// Check condition before Action
+        /// Execute the given 'func' delegate if the given condition is true
+        /// Else execute 'elseFunc' delegate
         /// </summary>
         /// <param name="board">Blackboard object</param>
         /// <param name="condition">Condition given as a delegate returning true</param>
-        /// <param name="func">Action if condition is true. Delegate receiving T and returning Status</param>
-        /// <param name="elseFunc">Action if condition is false. Delegate receiving T and returning Status</param>
+        /// <param name="func">Action to execute if condition is true. Delegate receiving T and returning Status</param>
+        /// <param name="elseFunc">Action to execute if condition is false. Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalAction(T board, 
-            Func<T, bool> condition, 
-            Func<T, Status> func,
-            Func<T, Status> elseFunc) 
-            => condition.Invoke(board) ? Action(board, func) : Action(board, elseFunc);
-
-        /// <summary>
-        /// Classic selector node
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="funcs">Actions returning Status</param>
-        /// <returns></returns>
-        public static Status Selector(T board, 
-#if NET9_0_OR_GREATER
-            params ReadOnlySpan<Func<T, Status>> funcs
-#else
-            params Func<T, Status>[] funcs
-#endif
-            )
-        {
-            foreach (var f in funcs)
-            {
-                var childStatus = f?.Invoke(board) ?? Status.Failure;
-                if(childStatus is Status.Running or Status.Success) 
-                    return childStatus;
-            }
-            return Status.Failure;
-        }
+        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func, Func<T, Status> elseFunc) 
+            => condition.Invoke(board) ? func.Invoke(board) : elseFunc.Invoke(board);
 
 #if !NET9_0_OR_GREATER
         /// <summary>
@@ -130,30 +104,7 @@ namespace Baltin.FBT
 
             return s;
         }
-#else
-        /// <summary>
-        /// Classic sequencer node
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="funcs">Delegates receiving T and returning Status</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board, 
-            params Func<T, Status>[] funcs
-            )
-        {
-            foreach (var f in funcs)
-            {
-                var childStatus = f?.Invoke(board) ?? Status.Success;
-                if (childStatus is Status.Running or Status.Failure)
-                    return childStatus;
-            }
-
-            return Status.Success;
-        }
-#endif
         
-#if !NET9_0_OR_GREATER
         /// <summary>
         /// Classic sequencer node
         /// </summary>
@@ -182,6 +133,49 @@ namespace Baltin.FBT
             s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
 
             return s;
+        }
+
+#endif
+
+#if NET9_0_OR_GREATER
+        /// <summary>
+        /// Classic selector node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Actions returning Status</param>
+        /// <returns></returns>
+        public static Status Selector(T board, 
+            params ReadOnlySpan<Func<T, Status>> funcs
+            )
+        {
+            foreach (var f in funcs)
+            {
+                var childStatus = f?.Invoke(board) ?? Status.Failure;
+                if(childStatus is Status.Running or Status.Success) 
+                    return childStatus;
+            }
+            return Status.Failure;
+        }
+
+        /// <summary>
+        /// Classic sequencer node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Sequencer(T board, 
+            params ReadOnlySpan<Action<T>> funcs
+            )
+        {
+            foreach (var f in funcs)
+            {
+                var childStatus = f?.Invoke(board) ?? Status.Success;
+                if (childStatus is Status.Running or Status.Failure)
+                    return childStatus;
+            }
+
+            return Status.Success;
         }
 #endif
     }

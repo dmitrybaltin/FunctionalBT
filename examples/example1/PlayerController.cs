@@ -7,7 +7,6 @@ public class PlayerController : MonoBehaviour
     private Rigidbody body;
 
     [SerializeField] private float Kp = 0.5f; 
-    private const bool topDown = false;
 
     void Start()
     {
