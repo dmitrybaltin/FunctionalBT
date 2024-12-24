@@ -32,7 +32,7 @@ The implementation has no strict dependency on Unity and can be integrated into 
 
 ## Usage Example
 
-Detailed example is inside the file 'FunctionalBehave.cs'. Here’s a core of it, the tree definition.  
+Detailed examples is inside the 'examples' folder. Here’s a core of it, the tree definition.  
 ```csharp
 public class NpcFbt : ExtendedFbt<NpcBoard>
 {
