@@ -28,7 +28,7 @@ The implementation has no strict dependency on Unity and can be integrated into 
    No expensive features are used (e.g., garbage collection, hash tables, closures, etc.).
   
 5. **Minimal and highly readable code**  
-   The simplest version of the library, containing only classic nodes, is just a single .cs file with 160 lines, including comments.
+   The simplest version of the library, containing only classic nodes, is just a single .cs file with several tens lines (excluding comments).
 
 ## Usage Example
 
