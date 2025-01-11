@@ -58,16 +58,17 @@ public class NpcFbt : ExtendedFbt<NpcBoard>
 ```
 This tree definition implements a simple behavior for an NPC that moves to the player if they are within the NPC's sight, then attacks. Key points to note:  
 1. **Classes**
-   1. **NpcBoard** is a custom class created by the user. It serves as the **blackboard** object and class contains the data and methods related to the NPC, which are controlled by the NpcFbt behavior tree.
-   1. **NpcFbt** is a custom class responsible for implementing the AI logic for this NPC. Derived from **ExtendedFbt**. It contains only one static function Execute() and does not contain any data fields.
+   1. **NpcBoard** is a custom **blackboard** class created by the user that contains the data and methods related to the NPC, which are controlled by the NpcFbt behavior tree.
+   1. **NpcFbt** is a custom class responsible for implementing the AI logic for this NPC. It contains only one static function Execute() and does not contain any data fields.
    1. **NpcBoard** instance is stored in an external container (e.g., a MonoBehaviour in Unity), which calls **NpcBoard.Execute()** during the update cycle.
+   1. **ExtendedFbt** is a class of this library implementing the code of nodes.
 1. **Methods**
-   1. **Action()**, **Sequencer()**, **Selector()**, and **ConditionalAction()** are static methods of the ExtendedFbt class, implemented by this library.
+   1. **Action()**, **Sequencer()**, **Selector()**, and **ConditionalAction()** are static methods of the ExtendedFbt class from this library, implementing different nodes.
    1. **b.FindTarget()**, **b.Attack()**, **b.Move()**, and **b.Idle()** are defined by the user inside NpcBoard class.
-1. **Memory allocation**
-   1. **static** modifier before anonymous delegates guarantee avoiding closures, making them extremely efficient in terms of memory usage because no memory allocation required when using these delegates.
-      1. In each lambda function, only a single internal variable, **b**, is used, and there are no closures.
-      2. All **b** variables point to the same **NpcBoard** instance received as an argument, but they are independent variables.
+1. **Zero memory allocation**
+   1. **static** modifier before anonymous delegates guarantee avoiding closures, therefore no memory allocation required for every delegates call.
+      1. Every lambda function uses the only a single internal variable, **b**, and there are no closures here.
+      2. All all these **b** variables point to the same **NpcBoard** instance received as an argument, but they are independent variables.
       3. Every tree node function receives the blackboard as a first parameter and forwards it to child nodes through delegates.
       4. Any accidental reference to a variable from a different lambda function would create a closure, causing memory allocation, but the **static** modifier prevents such situations.
    1. Functions with multiple arguments (**Selector**, **Sequence**, etc) avoid using **params arrays** definition that's why no memory allocated for these calls.
@@ -76,7 +77,14 @@ As shown in the example code, this implementation is extremely simple, zero allo
 Here is an illustration of breakpoints in the code:
 ![Example of debugging](fbt_example.png)
 
-Below is an example implementation of a classic behavior tree node: the Selector.
+## Functional Behavior Tree pattern code. The code for C#13 (not Unity)
+
+Bellow is a full code of 4 standard Behavior Tree nodes from this library: **Selector**, **Sequencer**, **Inverter**.  
+(The code of **Action** node is not required because an every delegates **Func<T, Status>** is an **Action** node).
+
+As you can see, the code is minimal and contains the core logic only. No any service code required because an each node is a static function rather than an object.
+The provided **Selector()** code leverages C# 13 features - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.
+That allow completely avoid dynamic memory allocation.
 
 ```csharp
         public static Status Selector(T board, params ReadOnlySpan<Func<T, Status>> funcs)
@@ -90,11 +98,20 @@ Below is an example implementation of a classic behavior tree node: the Selector
             return Status.Failure;
         }
 ```
-As you can see, the code is minimal and contains only the core logic. Each behavior tree node is a static function rather than an object, reducing overhead.
-
 ### Note
-The provided **Selector()** function leverages C# 13 features - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional array, completely avoiding dynamic memory allocation.
-However, since C# 13 support in Unity might not be available for several years, the library also includes versions of the behavior tree functions compatible with earlier C# versions. These implementations are slightly more verbose but remain simple, clear, and allocation-free.
+
+## Functional Behavior Tree pattern code. The code for Unity
+
+Unity does not support C# 13, so this library also includes versions of the BT compatible with Unity (2021.2 and later).
+These implementations are slightly more verbose but remain simple, clear, and allocation-free.   
+
+As you can see these functions contain default arguments values as a way to create an arbitrary length list of arguments instead of traditionally using **params arrays** arguments.  
+**params arrays** is not used here because of its significant minus - it allocates memory for every function call to create an array of these arguments so it is very memory-inificcient.
+
+The disadvantage of the choosen method is a limited maximum quantity of child nodes that is 8, but really it is not a significant minus. 
+This number 8 was choosen from practical ussing and usiually it is mostly enought for Behavior Tree logic. If it is required to use more childdren there are two simple solutions:
+1. Hierarhically stack several nodes each other. Every additional "stage" of this piramid increment the quantity of child nodes exponentially. 
+2. Modify the code of **Sequencer** and **Selector** functions by adding more input arguments. Tt requires ~the minutes of coding.
 
 ## Requirements
 - C# 9 (Unity 2021.2 and later) is required because of using static anonymous delegates.
