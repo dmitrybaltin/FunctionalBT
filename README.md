@@ -11,6 +11,18 @@ The implementation has no strict dependency on Unity and can be integrated into 
 
 # Overview
 
+## Intro
+
+There are many different implementations of Behaviour Tree in Unity. Typically, it's some kind of node editor, a large set of nodes, a kind of debugging tools, and a lot of internal service code whose efficiency we can only guess at. Debugging is often a big problem.
+
+**Functional Behavior Tree is a programming pattern that offers a different, professional approach**.
+
+- Instead of a node editor, you define the behavior tree inside C# using simplest and clear syntax.
+- Instead of a using heavy libraries with ton of internal code, you use a thin simple pattern that is absolutely transparent for you.
+- Instead of a specialized debugger, you use C# debugger inside you favorite IDE.
+
+This package includes the full source code of Functional Behavior Tree (FBT) parrern in C# and the example of using. You can use FBT it as a black box to create AI for your NPC, or you can improve it yourself by adding your nodes.
+
 ## Key Features
 
 1. **Clear and Concise Behavior Tree Definition**  
