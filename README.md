@@ -44,10 +44,19 @@ This package includes the full source code of Functional Behavior Tree (FBT) par
 5. **Minimal and highly readable code**  
    The simplest version of the library, containing only classic nodes, is just a single .cs file with several tens lines (excluding comments).
 
+## Installation
+
+1. Create a Unity project (Unity 2021.2 or later is required).
+2. Install **Functional Behavior Tree**:
+   - **Option 1:** Install the package "Functional Behavior Tree" from the Unity Asset Store.
+   - **Option 2:** Clone the Git repository [FunctionalBT](https://github.com/dmitrybaltin/FunctionalBT.git) to a subfolder inside the **Assets** directory of your project.  
+
 ## Usage Example
 
-Detailed examples is inside the 'examples' folder. Here’s a core of it, the tree definition.  
-This tree definition implements a simple behavior for an NPC that moves to the player if they are within the NPC's sight, then attacks. 
+Detailed examples of using Functional Behavior Tree (FBT) can be found in the folder examples/example1. To run the example, open the scene file located at examples/example1/Scene.unity in Unity.
+
+This example demonstrates a simple behavior tree for an NPC represented as a circle. The NPC can idle, move toward the player (also represented as a circle), or attack the player, depending on specific conditions.
+
 ```csharp
 public class NpcFbt : ExtendedFbt<NpcBoard>
 {
