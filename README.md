@@ -47,6 +47,7 @@ This package includes the full source code of Functional Behavior Tree (FBT) par
 ## Usage Example
 
 Detailed examples is inside the 'examples' folder. Here’s a core of it, the tree definition.  
+This tree definition implements a simple behavior for an NPC that moves to the player if they are within the NPC's sight, then attacks. 
 ```csharp
 public class NpcFbt : ExtendedFbt<NpcBoard>
 {
@@ -68,7 +69,7 @@ public class NpcFbt : ExtendedFbt<NpcBoard>
     }
 }
 ```
-This tree definition implements a simple behavior for an NPC that moves to the player if they are within the NPC's sight, then attacks. Key points to note:  
+Key points to note:  
 1. **Classes**
    1. **NpcBoard** is a custom **blackboard** class created by the user that contains the data and methods related to the NPC, which are controlled by the NpcFbt behavior tree.
    1. **NpcFbt** is a custom class responsible for implementing the AI logic for this NPC. It contains only one static function Execute() and does not contain any data fields.
@@ -89,13 +90,17 @@ As shown in the example code, this implementation is extremely simple, zero allo
 Here is an illustration of breakpoints in the code:
 ![Example of debugging](fbt_example.png)
 
-## Functional Behavior Tree pattern code. The code for C#13 (not Unity)
+## Functional Behavior Tree pattern code for C#13 (not for Unity)
 
-Bellow is a full code of 4 standard Behavior Tree nodes from this library: **Selector**, **Sequencer**, **Inverter**.  
-(The code of **Action** node is not required because an every delegates **Func<T, Status>** is an **Action** node).
+Bellow is a full code of 3 standard Behavior Tree nodes from this library: **Selector**, **Sequencer**, **Inverter**.  
 
-As you can see, the code is minimal and contains the core logic only. No any service code required because an each node is a static function rather than an object.
-The provided **Selector()** code leverages C# 13 features - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.
+The main point here is an **each node is a static function rather than an object**. That's why the code is minimal and contains the core logic only:
+1. Every node - is the only static function, containing the required logic.
+1. Different boilerplate services code is not required (for example class constructior). 
+1. No code for **Action** node is required because an every static delegates **Func<T, Status>** can be used as an **Action** node.
+
+### Note
+The provided **Selector()** code leverages C# 13 feature - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.
 That allow completely avoid dynamic memory allocation.
 
 ```csharp
@@ -110,20 +115,23 @@ That allow completely avoid dynamic memory allocation.
             return Status.Failure;
         }
 ```
-### Note
+## Functional Behavior Tree pattern code for Unity
 
-## Functional Behavior Tree pattern code. The code for Unity
-
-Unity does not support C# 13, so this library also includes versions of the BT compatible with Unity (2021.2 and later).
+Unity does not support C# 13, so this library also includes the code compatible with Unity (2021.2 and later).
 These implementations are slightly more verbose but remain simple, clear, and allocation-free.   
 
 As you can see these functions contain default arguments values as a way to create an arbitrary length list of arguments instead of traditionally using **params arrays** arguments.  
-**params arrays** is not used here because of its significant minus - it allocates memory for every function call to create an array of these arguments so it is very memory-inificcient.
+The **Params arrays** is not used here because of its significant minus - it allocates memory for every function call to create an array of these arguments so it is very memory-inificcient.
 
-The disadvantage of the choosen method is a limited maximum quantity of child nodes that is 8, but really it is not a significant minus. 
-This number 8 was choosen from practical ussing and usiually it is mostly enought for Behavior Tree logic. If it is required to use more childdren there are two simple solutions:
-1. Hierarhically stack several nodes each other. Every additional "stage" of this piramid increment the quantity of child nodes exponentially. 
-2. Modify the code of **Sequencer** and **Selector** functions by adding more input arguments. Tt requires ~the minutes of coding.
+The disadvantage of the chosen method is a limited maximum quantity of child nodes that is 8, but really it is not a significant minus.  
+This number 8 was chosen out of practice, and is almost always enough for the behavior tree logic.  
+If more child nodes are required, there are two simple solutions:
+1. Place several nodes hierarchically on top of each other. Each additional "stage" of this pyramid increases the number of child nodes exponentially.
+2. Modify the code of the **Sequencer** and **Selector** functions by adding more input arguments. ~10 minutes of coding.
+
+### Note
+It is not required to make any actions to switch between "*Unity mode*"/"*C#13 mode*" because it is made by preprocessor directives inside the code. 
+If C#13 can be used it will be used.
 
 ## Requirements
 - C# 9 (Unity 2021.2 and later) is required because of using static anonymous delegates.
