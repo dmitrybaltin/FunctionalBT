@@ -1,44 +1,48 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider))]
-public class PlayerController : MonoBehaviour
+namespace Baltin.FBT.Example
 {
-    private Camera mainCamera;
-    private Rigidbody body;
-    private MeshRenderer meshRenderer;
 
-    [SerializeField] private float Kp = 0.5f; 
-
-    void Start()
+    [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider))]
+    public class PlayerController : MonoBehaviour
     {
-        mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
-        body = GetComponent<Rigidbody>();
+        private Camera mainCamera;
+        private Rigidbody body;
+        private MeshRenderer meshRenderer;
 
-        meshRenderer = GetComponent<MeshRenderer>();
-        meshRenderer.material.SetColor("_Color", Color.green);
-    }
+        [SerializeField] private float Kp = 0.5f;
 
-    void Update()
-    {
-        if (!TryGetMouseWorldPosition(out Vector3 targetPos)) 
-            return;
-        
-        var force = (targetPos - transform.position) * Kp;
-        body.AddForce(force, ForceMode.VelocityChange);
-    }
-
-    private bool TryGetMouseWorldPosition(out Vector3 targetPos)
-    {
-        var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-
-        if (ray.direction.z != 0)
+        void Start()
         {
-            var delta = -ray.origin.z / ray.direction.z;
-            targetPos = ray.origin + ray.direction * delta;
-            return delta > 0;
+            mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
+            body = GetComponent<Rigidbody>();
+
+            meshRenderer = GetComponent<MeshRenderer>();
+            meshRenderer.material.SetColor("_Color", Color.green);
         }
 
-        targetPos = Vector3.zero;
-        return false;
+        void Update()
+        {
+            if (!TryGetMouseWorldPosition(out Vector3 targetPos))
+                return;
+
+            var force = (targetPos - transform.position) * Kp;
+            body.AddForce(force, ForceMode.VelocityChange);
+        }
+
+        private bool TryGetMouseWorldPosition(out Vector3 targetPos)
+        {
+            var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+
+            if (ray.direction.z != 0)
+            {
+                var delta = -ray.origin.z / ray.direction.z;
+                targetPos = ray.origin + ray.direction * delta;
+                return delta > 0;
+            }
+
+            targetPos = Vector3.zero;
+            return false;
+        }
     }
 }

@@ -191,6 +191,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -259,6 +263,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -544,6 +552,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -637,6 +649,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -817,6 +833,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -986,6 +1006,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1161,6 +1185,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1235,6 +1263,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1304,6 +1336,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1372,6 +1408,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1456,6 +1496,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1825,6 +1869,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1894,6 +1942,10 @@ PrefabInstance:
       propertyPath: config.baseEnemyForce
       value: -0.01
       objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1962,6 +2014,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2036,6 +2092,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2188,6 +2248,10 @@ PrefabInstance:
     - target: {fileID: 1322593512197563539, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
       propertyPath: config.baseEnemyForce
       value: -0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1442311000749499533, guid: 1547273aa01ff234eb76e58619948f19, type: 3}
+      propertyPath: m_Drag
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
