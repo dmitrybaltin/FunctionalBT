@@ -44,6 +44,9 @@ This package includes the full source code of Functional Behavior Tree (FBT) par
 5. **Minimal and highly readable code**  
    The simplest version of the library, containing only classic nodes, is just a single .cs file with several tens lines (excluding comments).
 
+## Requirements
+C# 9 (Unity 2021.2 and later) is required because of using static anonymous delegates.
+
 ## Installation
 
 1. Create a Unity project (Unity 2021.2 or later is required).
@@ -286,8 +289,65 @@ If more child nodes are required, there are two simple solutions:
 No actions are required to switch between "*Unity mode*" and "*C#13 mode*" because this is handled automatically using preprocessor directives (`#if !NET9_0_OR_GREATER`) in the code. 
 If C#13 is supported, it will be used automatically.
 
-## Requirements
-- C# 9 (Unity 2021.2 and later) is required because of using static anonymous delegates.
+##  Library Versions
+For convenience, the tree is split into three separate classes that inherit from each other.
+
+- LightestFBT: The lightest tree, where only four classic nodes are available: Action, Inverter, Selector, and Sequencer. If you're new to Behavior Trees, I recommend starting with this class.
+- ExtendedFbt: An extended version with additional, user-friendly nodes. It's essentially syntactic sugar.
+Includes an Actions() node for performing Action-type functions (which can be quite useful).
+Conditional nodes that evaluate a boolean condition via a delegate before executing actions.
+- ExperimentalFbt: This contains nodes whose usefulness I am still uncertain about, or those still under development.
+
+## Conclusions
+
+### Ease of Definition and Debugging
+
+The library was designed to provide an easy-to-debug, textual (C#) solution, and this goal has been fully achieved.  
+The behavior tree implementation is compact, and debugging is intuitive, leveraging your IDE’s capabilities.  
+You can set breakpoints anywhere in the code, and they will trigger correctly when that part of the tree is executed, making it easy to trace and understand the tree’s behavior.
+
+### Memory Consumption
+
+The BT code is extremely lightweight.
+- The tree structure is not stored in memory; it is defined directly in the code as nested functions.
+- No memory is allocated for delegates, as only static delegates and static functions are used.
+- Passing parameters explicitly to functions, without relying on *params arrays*, thus avoiding heap allocations.
+
+### Performance
+
+The code is designed for high performance as it avoids complex operations such as memory allocation suach as GS, hashtables etc. Instead, it relies on simple operations: conditional operators, basic loops, direct method calls.  
+These minimal operations ensure that the code runs efficiently with little overhead, and further optimization is likely unnecessary. Any performance bottlenecks are more likely to arise from other parts of your code rather than from this implementation.
+
+#### Potential Bottleneck with DOTS, Jobs, and Burst
+If your project is fully built on DOTS and you are actively using Jobs and the Burst compiler for speed optimization, this library could potentially become a bottleneck. The reason is that the library is built around delegates, which are reference types and not compatible with Jobs and Burst optimizations.
+
+#### PotentialPossible Solution
+If this becomes a problem, one possible solution could involve transitioning from delegates to function pointers. Function pointers are value types and could potentially be more compatible with Jobs and Burst, improving performance in such scenarios.
+
+Please let me know if this becomes an issue, as I can explore potential adjustments.
+
+### Asynchronous Operations
+
+A limitation of the current solution is its handling of asynchronous operations.
+
+For example, when performing raycasts, especially with a large number of NPCs, it is often more efficient to batch the operations. In this case, it would be ideal to pause the tree, wait for the raycast results, and then continue execution on the next frame.
+
+This can be easily achieved with asynchronous functions. However, since this implementation uses regular functions instead of async ones, implementing this behavior requires introducing additional flags within the blackboard and checking them in conditions.
+
+It may make sense to develop an asynchronous version of this pattern. While it would be more convenient for such cases, it could be less efficient in terms of memory and performance. However, the performance loss is likely to be negligible compared to other bottlenecks in your code, and the added convenience may be more valuable.
+
+I plan to create an asynchronous version of the tree, supporting both standard async/await and UniTask.
+
+## Development Plans
+
+The core idea has been successfully implemented, and the result is close to 100% of the expected outcome. The planned development will be evolutionary, including:
+
+Enhancing the library based on user feedback.
+Optimization, if good ideas arise.
+Adding more nodes.
+Improving the handling of variable argument lists.
+Attempting to reduce boilerplate code in behavior trees (although this is unlikely, it’s not ruled out).
+Additionally, I’m considering the creation of a more advanced behavior tree based on the same functional principles, such as an asynchronous tree (using async functions) or an event-driven tree. However, it’s still unclear whether these more complex BT models would justify the time and effort required to implement them.
 
 ---
 # Functional Behavior Tree Philosophy
