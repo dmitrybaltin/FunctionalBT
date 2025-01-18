@@ -325,34 +325,34 @@ The code is designed for high performance as it avoids complex operations such a
 These minimal operations ensure that the code runs efficiently with little overhead, and further optimization is likely unnecessary. Any performance bottlenecks are more likely to arise from other parts of your code rather than from this implementation.
 
 #### Potential Bottleneck with DOTS, Jobs, and Burst
-If your project is fully built on DOTS and you are actively using Jobs and the Burst compiler for speed optimization, this library could potentially become a bottleneck. The reason is that the library is built around delegates, which are reference types and not compatible with Jobs and Burst optimizations.
+If your project is fully built on DOTS and you are actively using Jobs and the Burst compiler for speed optimization, FBT could potentially become a bottleneck. The reason is that the library is built around delegates, which are reference types and not compatible with Jobs and Burst optimizations.
 
-#### PotentialPossible Solution
-If this becomes a problem, one possible solution could involve transitioning from delegates to function pointers. Function pointers are value types and could potentially be more compatible with Jobs and Burst, improving performance in such scenarios.
+#### Potential Solution
+If this becomes a problem, one potential solution could involve transitioning from delegates to function pointers. Function pointers are value types and could be more compatible with Jobs and Burst, potentially improving performance in such scenarios.
 
-Please let me know if this becomes an issue, as I can explore potential adjustments.
+Please let me know if this becomes an issue, and I'd be happy to explore possible adjustments.
 
 ### Asynchronous Operations
 
 A limitation of the current solution is its handling of asynchronous operations.
 
-For example, when performing raycasts, especially with a large number of NPCs, it is often more efficient to batch the operations. In this case, it would be ideal to pause the tree, wait for the raycast results, and then continue execution on the next frame.
+For example, when performing raycasts, especially with a large number of NPCs, it is often more efficient to batch the raycasts operations. In this case, it would be ideal to pause the tree, wait for the raycast results, and then continue execution on the next frame.
 
 This can be easily achieved with asynchronous functions. However, since this implementation uses regular functions instead of async ones, implementing this behavior requires introducing additional flags within the blackboard and checking them in conditions.
 
 It may make sense to develop an asynchronous version of this pattern. While it would be more convenient for such cases, it could be less efficient in terms of memory and performance. However, the performance loss is likely to be negligible compared to other bottlenecks in your code, and the added convenience may be more valuable.
 
-I plan to create an asynchronous version of the tree, supporting both standard async/await and UniTask.
+To solve this problem I plan to create an asynchronous version of the tree, supporting both standard async/await and UniTask.
 
 ## Development Plans
 
 The core idea has been successfully implemented, and the result is close to 100% of the expected outcome. The planned development will be evolutionary, including:
+- Enhancing the library based on user feedback.
+- Optimization, if good ideas arise.
+- Adding more nodes.
+- Improving the handling of variable argument lists.
+- Attempting to reduce boilerplate code in behavior trees (although this is unlikely, it’s not ruled out).
 
-Enhancing the library based on user feedback.
-Optimization, if good ideas arise.
-Adding more nodes.
-Improving the handling of variable argument lists.
-Attempting to reduce boilerplate code in behavior trees (although this is unlikely, it’s not ruled out).
 Additionally, I’m considering the creation of a more advanced behavior tree based on the same functional principles, such as an asynchronous tree (using async functions) or an event-driven tree. However, it’s still unclear whether these more complex BT models would justify the time and effort required to implement them.
 
 ---
