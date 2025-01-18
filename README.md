@@ -101,19 +101,83 @@ Here is an illustration of breakpoints in the code:
 
 ## Functional Behavior Tree pattern code for C#13 (not for Unity)
 
-Bellow is a full code of 3 standard Behavior Tree nodes from this library: **Selector**, **Sequencer**, **Inverter**.  
+Below is a full implementation of the Functional Behavior Tree pattern, including all the classic nodes (**Selector**, **Sequencer**, **Conditional**, and **Inverter**) and the required supporting code: the **Status** enum and a couple of extension methods for it.  
+In total, the code is just over 100 lines, including comments.  
+You can also find the same code in the file [LightestFBT.cs](src/LightestFBT.cs).
 
 The main point here is an **each node is a static function rather than an object**. That's why the code is minimal and contains the core logic only:
 1. Every node - is the only static function, containing the required logic.
-1. Different boilerplate services code is not required (for example class constructior). 
+1. Different boilerplate services code (for example class constructior) is not required. 
 1. No code for **Action** node is required because an every static delegates **Func<T, Status>** can be used as an **Action** node.
 
-### Note
-The provided **Selector()** code leverages C# 13 feature - the **params Collections** - to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.
-That allow completely avoid dynamic memory allocation.
+The provided **Selector()** code utilizes a C# 13 feature — **params collections** — to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.  
+This approach completely avoids dynamic memory allocation calling this function. For more details, see the official documentation on [params collections](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-13.0/params-collections).
 
 ```csharp
-        public static Status Selector(T board, params ReadOnlySpan<Func<T, Status>> funcs)
+    public enum Status
+    {
+        Success = 0,
+        Failure = 1,
+        Running = 2,
+    }
+
+    public static class StatusExtensions
+    {
+        /// <summary>
+        /// Invert Status
+        /// </summary>
+        /// <param name="status">Source status to invert</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Invert(this Status status)
+        {
+            return status switch
+            {
+                Status.Failure => Status.Success,
+                Status.Success => Status.Failure,
+                _ => Status.Running,
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status ToStatus(this bool value) => 
+            value ? Status.Success : Status.Failure;
+    }
+    
+    public class LightestFbt<T>
+    {
+        /// <summary>
+        /// Classic inverter node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="func">Delegate receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Inverter(T board, Func<T, Status> func)
+            => func.Invoke(board).Invert();
+        
+        /// <summary>
+        /// Execute the given func delegate if the given condition is true 
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func) 
+            => condition.Invoke(board) ? func.Invoke(board): Status.Failure;
+
+#if NET9_0_OR_GREATER
+        /// <summary>
+        /// Classic selector node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Actions returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Selector(T board, 
+            params ReadOnlySpan<Func<T, Status>> funcs
+            )
         {
             foreach (var f in funcs)
             {
@@ -123,14 +187,94 @@ That allow completely avoid dynamic memory allocation.
             }
             return Status.Failure;
         }
+
+        /// <summary>
+        /// Classic sequencer node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Sequencer(T board, 
+            params ReadOnlySpan<Func<T, Status>> funcs
+            )
+        {
+            foreach (var f in funcs)
+            {
+                var childStatus = f?.Invoke(board) ?? Status.Success;
+                if (childStatus is Status.Running or Status.Failure)
+                    return childStatus;
+            }
+
+            return Status.Success;
+        }
+#endif
+   }
 ```
 ## Functional Behavior Tree pattern code for Unity
 
 Unity does not support C# 13, so this library also includes the code compatible with Unity (2021.2 and later).
 These implementations are slightly more verbose but remain simple, clear, and allocation-free.   
 
-As you can see these functions contain default arguments values as a way to create an arbitrary length list of arguments instead of traditionally using **params arrays** arguments.  
-The **Params arrays** is not used here because of its significant minus - it allocates memory for every function call to create an array of these arguments so it is very memory-inificcient.
+The only required change is chanfing paramas Copllection (usied in Sequencer and Selector) to some other code.
+You can see the implementation bellow.
+
+```csharp
+#if !NET9_0_OR_GREATER
+        /// <summary>
+        /// Classic selector node
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Selector(T board,
+            Func<T, Status> f1,
+            Func<T, Status> f2,
+            Func<T, Status> f3 = null,
+            Func<T, Status> f4 = null,
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null,
+            Func<T, Status> f7 = null,
+            Func<T, Status> f8 = null)
+        {
+            var s = f1?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f2?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f3?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f4?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f5?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f6?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f7?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f8?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+
+            return s;
+        }
+        
+        /// <summary>
+        /// Classic sequencer node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Sequencer(T board,
+            Func<T, Status> f1,
+            Func<T, Status> f2,
+            Func<T, Status> f3 = null,
+            Func<T, Status> f4 = null,
+            Func<T, Status> f5 = null,
+            Func<T, Status> f6 = null,
+            Func<T, Status> f7 = null,
+            Func<T, Status> f8 = null)
+        {
+            var s = f1?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f2?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f3?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f4?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f5?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f7?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f8?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+
+            return s;
+        }
+#endif
+```
 
 The disadvantage of the chosen method is a limited maximum quantity of child nodes that is 8, but really it is not a significant minus.  
 This number 8 was chosen out of practice, and is almost always enough for the behavior tree logic.  
@@ -139,39 +283,61 @@ If more child nodes are required, there are two simple solutions:
 2. Modify the code of the **Sequencer** and **Selector** functions by adding more input arguments. ~10 minutes of coding.
 
 ### Note
-It is not required to make any actions to switch between "*Unity mode*"/"*C#13 mode*" because it is made by preprocessor directives inside the code. 
-If C#13 can be used it will be used.
+No actions are required to switch between "*Unity mode*" and "*C#13 mode*" because this is handled automatically using preprocessor directives (`#if !NET9_0_OR_GREATER`) in the code. 
+If C#13 is supported, it will be used automatically.
 
 ## Requirements
 - C# 9 (Unity 2021.2 and later) is required because of using static anonymous delegates.
 
-# Description
+---
+# Functional Behavior Tree Philosophy
 
-## Initial Constraints and Approach
+This section explains the design philosophy, implementation details, and optimizations behind the Functional Behavior Tree (BT) library. It also highlights key constraints, the reasoning behind chosen approaches, and solutions to specific challenges.
 
-1. Functional BT implements a classic behavior tree, executed in its entirety during each game loop cycle, rather than a more complex variant like an Event-Driven BT.  
-2. It follows a "code-only" approach, relying exclusively on C# without the need for specialized visual editors (such as Behavior Designer) or custom behavior tree languages (like PandaBT [link]).   
-3. The implementation adheres to the modern standard, where the behavior tree and the managed object (commonly referred to as the Blackboard) are treated as separate entities. The tree consists of nested nodes that operate on the Blackboard, which is shared across all nodes within the same tree instance.
+## Initial Constraints
 
-## Functional Approach to Behavior Tree Development
+The library was designed with the following limitations in mind:
 
-In my opinion, the authors of most behavior tree solutions make a mistake by treating the behavior tree as a graph, which is too complex a metaphor that leads to unnecessarily complicated designs. Nodes are typically represented as objects, each requiring its own class, and editing the tree often involves complex visual editors. Since nodes are objects, their creation and execution happen in different parts of the code, making debugging difficult and prompting the need for specialized debuggers.
+1. **Classic Behavior Tree Execution:**
+   - Implements a traditional behavior tree that executes completely during each game loop cycle, rather than adopting an event-driven approach.
 
-Instead, the behavior tree should be thought of as a function. Each BT node is a function (not an object!) because it has multiple inputs and one output, and it does not require memory. That is why the tree as a whole is also a function that recursively calls a set of functions. This is why we need to use functional programming here - this approach allows us to create clear and structured FB code that is easy to develop and debug using your favorite IDE.
+2. **Code-Only Implementation:**
+   - Focuses solely on C# code, avoiding the need for visual editors (e.g., Behavior Designer) or custom languages (e.g., PandaBT).
 
-These main principles guided the development of this library, and I am glad that the result is nearly identical to my original vision. There were some compromises, and the resulting code contains minor boilerplate, but it remains easy to read, merge, and debug, while being fast and memory-efficient.
+3. **Separation of Concerns:**
+   - The behavior tree and the managed object (commonly referred to as the Blackboard) are treated as separate entities. Nodes operate on the Blackboard shared across all nodes within the same tree instance.
 
-## Convenient debugging
 
-Look at the code [above](#usage-example).   
-You can set a breakpoint on every line of this code — on each anonymous delegate, which represents an action or condition, and on each call to a node function (such as Selector, Sequencer, Action) — and every  breakpoint will be invoked correctly at the right moment.  
-I believe the debugging capabilities are ideal.
+## Behavior Trees: A Functional Approach
 
-## Zero memory allocation
+Many different implementations of Behaviour Trees in Unity involve a node editor, a large set of nodes, a runtime system, and debugging tools, along with a lot of internal service code whose efficiency is often uncertain. However, most of these implementations treat the tree as a graph, which leads to unnecessarily complex designs, where nodes are represented as objects requiring individual classes and intricate visual editors. As a result, debugging becomes challenging due to the separation of node creation and execution across various parts of the codebase, making specialized tools necessary.
 
-### What is the problem
+### The Functional Alternative
 
-In one of the early versions of the library, the code looked like this:
+To truly understand the Behaviour Tree, we should think of it as a function, not a graph.
+
+Indeed, each node in the BT is a function (not an object!), with multiple inputs and a single output, and it doesn’t require memory (there is no need to store any state between function calls). Therefore, the tree as a whole, or any of its subtrees, is also a function that calls the functions of its child nodes.
+
+In this library:
+
+- **Nodes are functions, not objects:**
+  - Each node is a function with multiple inputs and one output, avoiding the need for memory allocation.
+
+- **Tree as a recursive function:**
+  - The behavior tree is a recursive function that calls nested node functions.
+
+- **Simplified debugging:**
+  - Functional programming principles ensure clarity, making code easy to debug using standard IDE tools.
+
+This approach results in clean, readable, and efficient code with minimal boilerplate, all while being fast and memory-efficient.
+
+---
+
+## Achieving Zero Memory Allocation
+
+### The Problem
+
+Below is the code from an earlier version of the pattern:
 
 ```csharp
     public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
@@ -184,7 +350,7 @@ In one of the early versions of the library, the code looked like this:
                 Selector(
                     _ => Action(
                         _ => SetColor(Color.grey)),
-                    _ => VoidActions(Status.Success,
+                    _ => Action(
                         _ => SetColor(Color.red)));
         }
 
@@ -196,73 +362,82 @@ In one of the early versions of the library, the code looked like this:
     }
 ```
 
-Where Sequencer() function head is:
+It works not so bad but unfortunatelly allocated significant memory due to:
+
+1. **Anonymous Delegates:**
+   - Each delegate implicitly captured the `this` pointer, creating new `System.Delegate` objects on every execution.
+
+2. **Dynamic Arrays:**
+   - Functions like `Sequencer` and `Selector` used `params`, leading to heap-allocated arrays for each call.
+
+Memory allocation during each game loop cycle, especially for large scenes with many NPCs, caused performance bottlenecks.
+
+### Solutions
+
+I eventually switched to the following implementation:
+
 ```csharp
-public Status Sequencer(T board, params Func<T, Status>[] funcs)
+    public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
+    {
+        public static Status Execute(ActorBoard b)
+        {
+            return
+                Selector(
+                    b => b.SetColor(Color.grey),
+                    b => b.SetColor(Color.red));
+        }
+    }
+    public class
+    {
+        Status SetColor(Color color)
+        {
+            View.SetColor(color);
+            return Status.Failure;
+        }
+    }
 ```
 
-In my opinion, this code looks great and fully implements the original idea — it is easy to debug, and the tree structure is stored directly in the code.
+#### 1. Static Anonymous Functions
 
-However, this code makes heavy use of dynamic memory allocation, although this may not be obvious at first glance.
+Using static anonymous functions (introduced in C# 9) resolves delegate memory allocation issues. Key adjustments include:
 
-1. Here closures are used because each delegate argument implicitly uses “this” pointer that is an external variable. As a result, every time such a lambda function is used, the new operator is called, creating a new System.Delegate object.  
-2. To pass a variable list of parameters to the Sequencer and Selector functions, arrays are implicitly used, since this is how functions with a variable number of arguments work in C#: before calling the function, an array is created in the heap (via new), filled with values, and passed to the function.
+- **Static Delegates:**
+  - Node functions (e.g., `Sequencer`, `Selector`) are declared as static.
 
-The tree is executed on each game loop cycle for every NPC object, and each time, these arrays and delegates are created. With a large number of NPCs in the scene, memory traffic can become significant.  
+- **Shared Blackboard Variable:**
+  - The blackboard is passed explicitly as an argument, allowing consistent naming (e.g., `b`) without capturing external variables.
 
-But both problems were resolved.
+Here is a perfect article about static anonimous delegates and their efficiency [Understanding the cost of C# delegates](https://devblogs.microsoft.com/dotnet/understanding-the-cost-of-csharp-delegates/)
 
-### Solution to the Memory Allocation Problem for Anonymous Delegates
+#### 2. Handling `params` Arrays
 
-The problem was fully resolved by using 'static anonymous functions', which were introduced in C# 9 and are supported in Unity 2021.2 and later versions.  
-A detailed explanation of this feature is available in the article [Understanding the Cost of C# Delegates](https://devblogs.microsoft.com/dotnet/understanding-the-cost-of-csharp-delegates/). 
+Dynamic memory allocation for `params` was addressed by:
 
-Please look at the final Functional BT syntax:  
+1. **ReadOnlySpan (C# 13):**
+   - Uses stack-allocated collections instead of heap-allocated arrays. Example:
+     ```csharp
+     public Status Sequencer(ReadOnlySpan<Func<T, Status>> funcs)
+     ```
 
-Code fragment here
+   Unfortunately, C# 13 features are not yet supported in Unity.
 
-Please note the following key points:
-1. The reference to the blackboard is an internal variable within the lambda function that’s why every BT node (Action, Selector, Sequencer, etc.) gets the blackboard as a first input argument and then uses it when calling input delegates.  
-2. Node functions (Sequencer, Selector, etc.) are declared as static, meaning they do not reference “this” pointer.  
-3. The static modifier ensures that closures are not used here and allows the using of the same blackboard variable name “b” in all the delegates (which, in my opinion, is convenient), avoiding compiler warnings.
+2. **Fixed Parameter Overloads:**
+   - Introduced functions with fixed parameter counts:
+     ```csharp
+     public Status Sequencer(Func<T, Status> func1, Func<T, Status>? func2 = null, ...)
+     ```
 
-As a result, memory allocation for delegate instances is completely eliminated. Only static class fields (whose memory is allocated once) are used, instead of instance fields.
+   - Practical limit of 5 parameters to cover typical scenarios.
 
-### Resolving the Problem with `params` Arrays
+3. **Auto-Generated Functions:**
+   - For advanced use cases, additional overloads (e.g., for up to 20 parameters) can be generated to optimize performance further.
 
-In C#13, which was released about a month ago, a great new feature called *params Collections* was introduced. This feature allows memory allocation for functions with a variable number of arguments to occur on the stack instead of the heap, providing a simple and efficient solution.
+## Conclusion
 
-To use this feature, you only need to modify the function's parameter declaration.  
-Instead of:
-```csharp
-params Func<T, Status>[] funcs  
-```
-you write   
-```csharp
-params ReadOnlySpan<Func<T, Status>> funcs  
-```
-That's it! The issue is resolved. From now on, no heap allocation is performed for the array; everything happens on the stack!
+The Functional Behavior Tree library provides a streamlined, efficient, and modern solution to behavior tree implementation. By leveraging functional programming principles, memory optimizations, and modern C# features, it delivers:
 
-Unfortunately, C#13 will not be integrated into Unity anytime soon, which necessitates an alternative solution.
+- Simple and effective debugging.
+- Zero runtime memory allocation.
+- Clean and readable syntax.
 
-I addressed the problem by defining a function with a fixed number of parameters, with the last ones being nullable.
-
-**Explanation of the Solution**
-
-1. **Sequencer with ReadOnlySpan**  
-   The `Sequencer` function accepts a collection of type `ReadOnlySpan` (stored on the stack) when using C#13. In earlier versions, it defaults to handling a standard array.
-
-2. **Overloaded Sequencer Function**  
-   There’s also an overloaded `Sequencer` function with a fixed number of parameters, all of which have default values. This allows it to be called with a varying number of arguments.  
-
-   - A practical limit of 5 nodes is implemented based on typical usage scenarios.  
-   - If the user provides 6 or more nodes, the variadic version of the function will be invoked. While less memory-efficient, it remains fully functional.
-
-3. **Advantages and Trade-offs**  
-   Although this approach may not look elegant, it works effectively. It might even perform better than `ReadOnlySpan` under certain conditions.
-
-**Optimizing Further**
-
-For those who are deeply concerned about execution efficiency, the best solution would involve creating (or auto-generating) a series of functions with fixed argument counts (e.g., from 1 to 20).  
-
-While the resulting code would appear verbose and cumbersome, the compiler would always select the most optimal function for the given input, ensuring no unnecessary overhead.
+While some compromises were necessary for compatibility, the overall design remains robust and aligns closely with the original vision.
