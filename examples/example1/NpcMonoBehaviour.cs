@@ -5,11 +5,17 @@ using UnityEngine;
 
 namespace Baltin.FBT.Example
 {
+    /// <summary>
+    /// NpcMonoBehaviour object that describe the NPC in scene and serve as a entry point for its behaviour 
+    /// </summary>
     [RequireComponent(typeof(Rigidbody)), RequireComponent(typeof(Collider)), RequireComponent(typeof(MeshRenderer))]
     public class NpcMonoBehaviour : MonoBehaviour
     {
         [SerializeField] private NpcConfig config;
 
+        /// <summary>
+        /// Blackboard object that contains methods and data of controlled object
+        /// </summary>
         private NpcBoard npcBoard;
 
         void Start()
@@ -26,6 +32,7 @@ namespace Baltin.FBT.Example
 
         void Update()
         {
+            //Behaviour tree is executed here and all the required NPC methods are called from Behavior Tree
             NpcFbt.Execute(npcBoard);
         }
     }
@@ -33,35 +40,49 @@ namespace Baltin.FBT.Example
     [Serializable]
     public class NpcConfig
     {
+        /// <summary>
+        /// Multiplayer to a gravity force between the NPC and the player when them are close to each other  
+        /// </summary>
         [SerializeField] public float baseClosePlayerForce = 5f;
+        
+        /// <summary>
+        /// Multiplayer to a gravity force between the NPC and the player when them are not close to each other  
+        /// </summary>
         [SerializeField] public float baseDistantPlayerForce = 0.5f;
     }
     
-    public class NpcFbt : ExtendedFbt<NpcBoard>
+    /// <summary>
+    /// Behavior Tree definition
+    /// </summary>
+    public class NpcFbt : ExtendedFbt<NpcBoard> //Parented from ExtendedFbt<NpcBoard> to use node methods 
     {
         public static void Execute(NpcBoard b) =>
-            Sequencer(b,
-                static b => b.PreUpdate(),
-                static b => Selector(b,
-                    static b => ConditionalSequencer(b, 
-                        static b => b.PlayerDistance < 1f,
-                        static b => b.SetColor(Color.red),
-                        static b => b.OscillateScale(1, 1.5f, 0.25f),
-                        static b => b.AddForce(b.Config.baseClosePlayerForce)),
-                    static b => ConditionalSequencer(b, 
+            Sequencer(b,    //Classic Sequencer node
+                static b => b.PreUpdate(),  //The first child of Sequencer that is a classic Action node realized as a delegate Func<NpcBoard, Status> 
+                static b => Selector(b,     //The first child of Sequencer is a Classic Selector node
+                    static b => If(b,       //The first child of Sequencer a Classic Conditional node 
+                        static b => b.PlayerDistance < 1f,  //Condition
+                        static b => Sequencer(b,            //This Sequencer node is executed when the condition above is true 
+                            static b => b.SetColor(Color.red),
+                            static b => b.OscillateScale(1, 1.5f, 0.25f),
+                            static b => b.AddForce(b.Config.baseClosePlayerForce))),
+                    static b => ConditionalSequencer(b,     //Using ConditionalSequencer instead of If + Sequencer (see above)   
                         static b => b.PlayerDistance < 3f,
                         static b => b.SetColor(Color.magenta),
                         static b => b.SetScale(1f, 0.1f),
                         static b => b.AddForce(b.Config.baseClosePlayerForce)),
-                    static b => ConditionalSequencer(b, 
+                    static b => ConditionalSequencer(b,         
                         static b => b.PlayerDistance < 8f,
                         static b => b.SetColor(Color.yellow),
                         static b => b.SetScale(1f, 1f),
                         static b => b.AddForce(b.Config.baseDistantPlayerForce)),
-                    static b => b.SetColor(Color.grey),
-                    static b => b.SetScale(1f, 1f)));
+                    static b => b.SetColor(Color.grey), //One more action node realized as a delegate Func<NpcBoard, Status>
+                    static b => b.SetScale(1f, 1f)));     //One more action node realized as a delegate Func<NpcBoard, Status>
     }
 
+    /// <summary>
+    /// Blackboard object that contains methods and data of controlled object
+    /// </summary>
     public class NpcBoard
     {
         private static readonly int ColorPropertyID = Shader.PropertyToID("_Color");
@@ -82,16 +103,21 @@ namespace Baltin.FBT.Example
 
         public NpcBoard(NpcConfig config, Rigidbody body, MeshRenderer meshRenderer, Transform player)
         {
-            this.Config = config;
-            this._player = player;
-            this._body = body;
-            this._meshRenderer = meshRenderer;
+            Config = config;
+            _player = player;
+            _body = body;
+            _meshRenderer = meshRenderer;
            
             _initialLocalScale = body.transform.localScale;
             
             InstanceId = body.GetInstanceID();
         }
         
+        /// <summary>
+        /// Some action at the beginning of execution
+        /// Calculation the distance between NPC and the player
+        /// </summary>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Status PreUpdate()
         {
