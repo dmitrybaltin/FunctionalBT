@@ -102,7 +102,7 @@ As shown in the example code, this implementation is extremely simple, zero allo
 Here is an illustration of breakpoints in the code:
 ![Example of debugging](fbt_example.png)
 
-## Functional Behavior Tree pattern code for C#13 (not for Unity)
+## Functional Behavior Tree pattern code for Unity
 
 Below is a full implementation of the Functional Behavior Tree pattern, including all the classic nodes (**Selector**, **Sequencer**, **Conditional**, and **Inverter**) and the required supporting code: the **Status** enum and a couple of extension methods for it.  
 In total, the code is just over 100 lines, including comments.  
@@ -113,10 +113,8 @@ The main point here is an **each node is a static function rather than an object
 1. Different boilerplate services code (for example class constructior) is not required. 
 1. No code for **Action** node is required because an every static delegates **Func<T, Status>** can be used as an **Action** node.
 
-The provided **Selector()** code utilizes a C# 13 feature — **params collections** — to pass multiple input arguments using **ReadOnlySpan** instead of a traditional **params array**.  
-This approach completely avoids dynamic memory allocation calling this function. For more details, see the official documentation on [params collections](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-13.0/params-collections).
-
 ```csharp
+#if !NET9_0_OR_GREATER
     public enum Status
     {
         Success = 0,
@@ -170,60 +168,6 @@ This approach completely avoids dynamic memory allocation calling this function.
         public static Status If(T board, Func<T, bool> condition, Func<T, Status> func) 
             => condition.Invoke(board) ? func.Invoke(board): Status.Failure;
 
-#if NET9_0_OR_GREATER
-        /// <summary>
-        /// Classic selector node
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="funcs">Actions returning Status</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Selector(T board, 
-            params ReadOnlySpan<Func<T, Status>> funcs
-            )
-        {
-            foreach (var f in funcs)
-            {
-                var childStatus = f?.Invoke(board) ?? Status.Failure;
-                if(childStatus is Status.Running or Status.Success) 
-                    return childStatus;
-            }
-            return Status.Failure;
-        }
-
-        /// <summary>
-        /// Classic sequencer node
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="funcs">Delegates receiving T and returning Status</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board, 
-            params ReadOnlySpan<Func<T, Status>> funcs
-            )
-        {
-            foreach (var f in funcs)
-            {
-                var childStatus = f?.Invoke(board) ?? Status.Success;
-                if (childStatus is Status.Running or Status.Failure)
-                    return childStatus;
-            }
-
-            return Status.Success;
-        }
-#endif
-   }
-```
-## Functional Behavior Tree pattern code for Unity
-
-Unity does not support C# 13, so this library also includes the code compatible with Unity (2021.2 and later).
-These implementations are slightly more verbose but remain simple, clear, and allocation-free.   
-
-The only required change is chanfing paramas Copllection (usied in Sequencer and Selector) to some other code.
-You can see the implementation bellow.
-
-```csharp
-#if !NET9_0_OR_GREATER
         /// <summary>
         /// Classic selector node
         /// </summary>
@@ -279,15 +223,77 @@ You can see the implementation bellow.
 #endif
 ```
 
-The disadvantage of the chosen method is a limited maximum quantity of child nodes that is 8, but really it is not a significant minus.  
-This number 8 was chosen out of practice, and is almost always enough for the behavior tree logic.  
-If more child nodes are required, there are two simple solutions:
-1. Place several nodes hierarchically on top of each other. Each additional "stage" of this pyramid increases the number of child nodes exponentially.
-2. Modify the code of the **Sequencer** and **Selector** functions by adding more input arguments. ~10 minutes of coding.
+There is one peculiar detail here: the Selector and Sequencer functions are implemented with multiple arguments that have default values, effectively functioning as variadic functions, instead of using the classic params arrays.
+
+This choice is intentional, not a bug. The params arrays feature is not memory-efficient because it creates a new array on the heap each time the function is executed.
+
+The downside of the chosen method is the limited maximum number of child nodes (8). However, this is not a significant issue.
+This number (8) was chosen based on practical experience and is almost always sufficient for behavior tree logic.
+If more child nodes are needed, there are two simple solutions:
+
+1. Place several nodes hierarchically, one on top of the other. Each additional "level" in this hierarchy exponentially increases the number of child nodes.
+1. Modify the Sequencer and Selector functions to add more input arguments (this takes about 10 minutes of coding).
+
+## Functional Behavior Tree pattern code for C#13 (not for Unity)
+
+C# 13 introduces a new efficient way to avoid memory allocation in variadic functions, called *params Collections*.
+
+Below is an implementation of Selector() and Sequencer() using this new feature. As you can see, I used ReadOnlySpan instead of a traditional params array. 
+This approach completely avoids dynamic memory allocation when calling these functions.   
+For more details, see the official documentation on [params collections](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-13.0/params-collections).
+
+```csharp
+#if NET9_0_OR_GREATER
+        /// <summary>
+        /// Classic selector node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Actions returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Selector(T board, 
+            params ReadOnlySpan<Func<T, Status>> funcs
+            )
+        {
+            foreach (var f in funcs)
+            {
+                var childStatus = f?.Invoke(board) ?? Status.Failure;
+                if(childStatus is Status.Running or Status.Success) 
+                    return childStatus;
+            }
+            return Status.Failure;
+        }
+
+        /// <summary>
+        /// Classic sequencer node
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="funcs">Delegates receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status Sequencer(T board, 
+            params ReadOnlySpan<Func<T, Status>> funcs
+            )
+        {
+            foreach (var f in funcs)
+            {
+                var childStatus = f?.Invoke(board) ?? Status.Success;
+                if (childStatus is Status.Running or Status.Failure)
+                    return childStatus;
+            }
+
+            return Status.Success;
+        }
+#endif
+   }
+```
+
+However, since Unity likely won't support C# 13 in the near future, you'll need to use a different approach, as shown earlier. While this alternative is not as syntactically elegant, it is still an efficient solution for handling multiple arguments.
 
 ### Note
 No actions are required to switch between "*Unity mode*" and "*C#13 mode*" because this is handled automatically using preprocessor directives (`#if !NET9_0_OR_GREATER`) in the code. 
 If C#13 is supported, it will be used automatically.
+
 
 ##  Library Versions
 For convenience, the tree is split into three separate classes that inherit from each other.
