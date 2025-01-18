@@ -160,6 +160,7 @@ namespace Baltin.FBT
         /// <param name="board">Blackboard object</param>
         /// <param name="funcs">Actions returning Status</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Selector(T board, 
             params ReadOnlySpan<Func<T, Status>> funcs
             )
@@ -181,7 +182,7 @@ namespace Baltin.FBT
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Sequencer(T board, 
-            params ReadOnlySpan<Action<T>> funcs
+            params ReadOnlySpan<Func<T, Status>> funcs
             )
         {
             foreach (var f in funcs)
