@@ -89,6 +89,8 @@ namespace Baltin.FBT
         /// <param name="f4">Optional delegate receiving T and returning Status</param>
         /// <param name="f5">Optional delegate receiving T and returning Status</param>
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <param name="f7">Optional delegate receiving T and returning Status</param>
+        /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Selector(T board,
@@ -97,7 +99,9 @@ namespace Baltin.FBT
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
             Func<T, Status> f5 = null,
-            Func<T, Status> f6 = null)
+            Func<T, Status> f6 = null,
+            Func<T, Status> f7 = null,
+            Func<T, Status> f8 = null)
         {
             var s = f1?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f2?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
@@ -105,6 +109,8 @@ namespace Baltin.FBT
             s = f4?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f5?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
             s = f6?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f7?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
+            s = f8?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
 
             return s;
         }
@@ -119,6 +125,8 @@ namespace Baltin.FBT
         /// <param name="f4">Optional delegate receiving T and returning Status</param>
         /// <param name="f5">Optional delegate receiving T and returning Status</param>
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <param name="f7">Optional delegate receiving T and returning Status</param>
+        /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Status Sequencer(T board,
@@ -127,7 +135,9 @@ namespace Baltin.FBT
             Func<T, Status> f3 = null,
             Func<T, Status> f4 = null,
             Func<T, Status> f5 = null,
-            Func<T, Status> f6 = null)
+            Func<T, Status> f6 = null,
+            Func<T, Status> f7 = null,
+            Func<T, Status> f8 = null)
         {
             var s = f1?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f2?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
@@ -135,6 +145,8 @@ namespace Baltin.FBT
             s = f4?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f5?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
             s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f7?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            s = f8?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
 
             return s;
         }
