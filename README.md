@@ -15,7 +15,7 @@ The implementation has no strict dependency on Unity and can be integrated into 
 
 There are many different implementations of Behaviour Tree in Unity. Typically, it's some kind of node editor, a large set of nodes, a kind of debugging tools, and a lot of internal service code whose efficiency we can only guess at. Debugging is often a big problem.
 
-**Functional Behavior Tree is a programming pattern that offers a different, professional approach**.
+**Functional Behavior Tree is a software design pattern that offers a different, professional approach**.
 
 - Instead of a node editor, you define the behavior tree inside C# using simplest and clear syntax.
 - Instead of a using heavy libraries with ton of internal code, you use a thin simple pattern that is absolutely transparent for you.
