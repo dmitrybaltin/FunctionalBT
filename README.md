@@ -5,7 +5,6 @@
 Highly efficient, functional-style implementation of behavior tree in C# designed to enable clear AI logic, convenient debugging, and fast execution with zero memory allocation.
 
 The codebase is minimal, simple, and easy to understand. Once familiarized with the approach, you can quickly reproduce or adapt it.  
-Rather than a library, this solution is better described as a design pattern.
 
 The implementation has no strict dependency on Unity and can be integrated into any C# project.
 
