@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using PlasticPipe.Server;
 using UnityEngine;
 
 namespace Baltin.FBT.Example
@@ -55,7 +54,7 @@ namespace Baltin.FBT.Example
     /// Behavior Tree definition
     /// </summary>
     public class NpcFbt : ExtendedFbt<NpcBoard> //Parented from ExtendedFbt<NpcBoard> to use node methods 
-    {
+    { 
         public static void Execute(NpcBoard b) =>
             Sequencer(b,    //Classic Sequencer node
                 static b => b.PreUpdate(),  //The first child of Sequencer that is a classic Action node realized as a delegate Func<NpcBoard, Status> 

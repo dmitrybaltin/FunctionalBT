@@ -30,8 +30,17 @@ namespace Baltin.FBT
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ToStatus(this bool value) => 
-            value ? Status.Success : Status.Failure;
+        public static Status ToStatus(this bool value) 
+            => value ? Status.Success : Status.Failure;
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool NotFailure(this Status status) 
+            => status != Status.Failure;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool NotSuccess(this Status status) 
+            => status != Status.Success;
+
     }
     
     /// <summary>
@@ -103,15 +112,16 @@ namespace Baltin.FBT
             Func<T, Status> f7 = null,
             Func<T, Status> f8 = null)
         {
-            var s = f1?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f2?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f3?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f4?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f5?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f6?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f7?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-            s = f8?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return s;
-
+            var s = f1.Invoke(board); if (s.NotFailure()) return s;
+                s = f2.Invoke(board); if (s.NotFailure()) return s;
+            
+                s = f3?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                s = f4?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                s = f5?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                s = f6?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                s = f7?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                s = f8?.Invoke(board) ?? Status.Success; if (s.NotFailure()) return s;
+                
             return s;
         }
         
@@ -139,14 +149,15 @@ namespace Baltin.FBT
             Func<T, Status> f7 = null,
             Func<T, Status> f8 = null)
         {
-            var s = f1?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f2?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f3?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f4?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f5?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f7?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
-            s = f8?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return s;
+            var s = f1.Invoke(board); if (s.NotSuccess()) return s;
+                s = f2.Invoke(board); if (s.NotSuccess()) return s;
+                
+                s = f3?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
+                s = f4?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
+                s = f5?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
+                s = f6?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
+                s = f7?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
+                s = f8?.Invoke(board) ?? Status.Success; if (s.NotSuccess()) return s;
 
             return s;
         }
