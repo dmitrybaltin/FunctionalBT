@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Windows.Speech;
 
@@ -10,45 +11,8 @@ namespace Baltin.FBT
     {
         Success = 0,
         Failure = 1,
-        Running = 2,
     }
-
-    public struct State
-    {
-        public Status Status;
-
-        public UniTask UniTask;
-
-        public State(Status status)
-        {
-            Status = status;
-            UniTask = default;
-        }
-        public State(UniTask uniTask)
-        {
-            switch (uniTask.Status)
-            {
-                case UniTaskStatus.Succeeded:
-                    Status = Status.Success;
-                    UniTask = default;
-                    return;
-                case UniTaskStatus.Pending:
-                    Status = Status.Running;
-                    break;
-                case UniTaskStatus.Canceled:
-                case UniTaskStatus.Faulted:
-                default:
-                    Status = Status.Failure;
-                    break;
-            }
-            UniTask = uniTask;
-        }
-        
-        public static implicit operator Status(State status) => status.Status;
-        public static State Failure => new State(Status.Failure);
-        public static State Success => new State(Status.Success);
-    }
-    
+   
     public static class StatusExtensions
     {
         /// <summary>
@@ -57,19 +21,19 @@ namespace Baltin.FBT
         /// <param name="state"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State Invert(this State state)
+        public static Status Invert(this Status status)
         {
-            return state.Status switch
+            return status switch
             {
-                Status.Failure => State.Success,
-                Status.Success => State.Failure,
-                _ => state,
+                Status.Failure => Status.Success,
+                Status.Success => Status.Failure,
+                _ => status,
             };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State ToState(this bool value) => 
-            value ? State.Success : State.Failure;
+        public static Status ToState(this bool value) => 
+            value ? Status.Success : Status.Failure;
     }
     
     /// <summary>
@@ -89,8 +53,11 @@ namespace Baltin.FBT
         /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State Inverter<T>(this T board, Func<T, State> func)
-            => func.Invoke(board).Invert();
+        public static async UniTask<Status> Inverter<T>(
+            this T board, 
+            CancellationToken ct, 
+            Func<T, CancellationToken, UniTask<Status>> func)
+            => (await func.Invoke(board, ct)).Invert();
         
         /// <summary>
         /// Execute the given func delegate if the given condition is true 
@@ -100,8 +67,12 @@ namespace Baltin.FBT
         /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State If<T>(this T board, Func<T, bool> condition, Func<T, State> func) 
-            => condition.Invoke(board) ? func.Invoke(board): State.Failure;
+        public static async UniTask<Status> If<T>(
+            this T board, 
+            CancellationToken ct, 
+            Func<T, bool> condition, 
+            Func<T, CancellationToken, UniTask<Status>> func) 
+            => condition.Invoke(board) ? await func.Invoke(board, ct): Status.Failure;
 
         /// <summary>
         /// Execute the given 'func' delegate if the given condition is true
@@ -113,8 +84,13 @@ namespace Baltin.FBT
         /// <param name="elseFunc">Action to execute if condition is false. Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State If<T>(this T board, Func<T, bool> condition, Func<T, State> func, Func<T, State> elseFunc) 
-            => condition.Invoke(board) ? func.Invoke(board) : elseFunc.Invoke(board);
+        public static async UniTask<Status> If<T>(
+            this T board, 
+            CancellationToken ct, 
+            Func<T, bool> condition, 
+            Func<T, CancellationToken, UniTask<Status>> func, 
+            Func<T, CancellationToken, UniTask<Status>> elseFunc) 
+            => condition.Invoke(board) ? await func.Invoke(board, ct) : await elseFunc.Invoke(board, ct);
 
 #if !NET9_0_OR_GREATER
         /// <summary>
@@ -129,28 +105,30 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <param name="f7">Optional delegate receiving T and returning Status</param>
         /// <param name="f8">Optional delegate receiving T and returning Status</param>
+        /// <param name="token"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State Selector<T>(this T board,
-            Func<T, State> f1,
-            Func<T, State> f2,
-            Func<T, State> f3 = null,
-            Func<T, State> f4 = null,
-            Func<T, State> f5 = null,
-            Func<T, State> f6 = null,
-            Func<T, State> f7 = null,
-            Func<T, State> f8 = null)
+        public static async UniTask<Status> Selector<T>(this T board, CancellationToken token,
+            Func<T, CancellationToken, UniTask<Status>> f1,
+            Func<T, CancellationToken, UniTask<Status>> f2,
+            Func<T, CancellationToken, UniTask<Status>> f3 = null,
+            Func<T, CancellationToken, UniTask<Status>> f4 = null,
+            Func<T, CancellationToken, UniTask<Status>> f5 = null,
+            Func<T, CancellationToken, UniTask<Status>> f6 = null,
+            Func<T, CancellationToken, UniTask<Status>> f7 = null,
+            Func<T, CancellationToken, UniTask<Status>> f8 = null)
         {
-            var s = f1?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f2?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f3?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f4?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f5?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f6?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f7?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
-            s = f8?.Invoke(board) ?? Status.Failure; if (s is Status.Running or Status.Success) return new State(s);
+            var s = f1 is null ? Status.Failure : await f1.Invoke(board, token); if(s is Status.Success) return s;
+            s = f2 is null ? Status.Failure : await f2.Invoke(board, token); if(s is Status.Success) return s;
+            s = f3 is null ? Status.Failure : await f3.Invoke(board, token); if(s is Status.Success) return s;
+            s = f4 is null ? Status.Failure : await f4.Invoke(board, token); if(s is Status.Success) return s;
+            s = f5 is null ? Status.Failure : await f5.Invoke(board, token); if(s is Status.Success) return s;
+            s = f6 is null ? Status.Failure : await f6.Invoke(board, token); if(s is Status.Success) return s;
+            s = f7 is null ? Status.Failure : await f7.Invoke(board, token); if(s is Status.Success) return s;
+            s = f8 is null ? Status.Failure : await f8.Invoke(board, token); if(s is Status.Success) return s;
 
-            return new State(s);
+            return Status.Failure;  //todo: возможно тут Success
+
         }
         
         /// <summary>
@@ -167,26 +145,26 @@ namespace Baltin.FBT
         /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State Sequencer<T>(this T board,
-            Func<T, State> f1,
-            Func<T, State> f2,
-            Func<T, State> f3 = null,
-            Func<T, State> f4 = null,
-            Func<T, State> f5 = null,
-            Func<T, State> f6 = null,
-            Func<T, State> f7 = null,
-            Func<T, State> f8 = null)
+        public static async UniTask<Status> Sequencer<T>(this T board, CancellationToken token,
+            Func<T, CancellationToken, UniTask<Status>> f1,
+            Func<T, CancellationToken, UniTask<Status>> f2,
+            Func<T, CancellationToken, UniTask<Status>> f3 = null,
+            Func<T, CancellationToken, UniTask<Status>> f4 = null,
+            Func<T, CancellationToken, UniTask<Status>> f5 = null,
+            Func<T, CancellationToken, UniTask<Status>> f6 = null,
+            Func<T, CancellationToken, UniTask<Status>> f7 = null,
+            Func<T, CancellationToken, UniTask<Status>> f8 = null)
         {
-            var s = f1?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f2?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f3?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f4?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f5?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f6?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f7?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-            s = f8?.Invoke(board) ?? Status.Success; if (s is Status.Running or Status.Failure) return new State(s);
-
-            return new State(s);
+            var s = f1 is null ? Status.Failure : await f1.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f2 is null ? Status.Failure : await f2.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f3 is null ? Status.Failure : await f3.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f4 is null ? Status.Failure : await f4.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f5 is null ? Status.Failure : await f5.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f6 is null ? Status.Failure : await f6.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f7 is null ? Status.Failure : await f7.Invoke(board, token); if(s is Status.Failure) return s;
+            s = f8 is null ? Status.Failure : await f8.Invoke(board, token); if(s is Status.Failure) return s;
+            
+            return Status.Success;
         }
 
 #endif
