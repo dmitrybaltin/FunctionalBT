@@ -50,13 +50,13 @@ namespace Baltin.FBT
         /// <param name="a">Delegate receiving T and returning Status</param>
         /// <returns>If the condition is false then return Failure. Else return the value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
-            Status returnStatus,
+        public static State If<T>(this T board,
+            State returnStatus,
             Func<T, bool> condition, 
             Action<T> a)
         {
             if (!condition.Invoke(board)) 
-                return Status.Failure;
+                return State.Failure;
             
             a.Invoke(board);
             return returnStatus;
@@ -73,8 +73,8 @@ namespace Baltin.FBT
         /// <param name="elseA">Alternative action if the condition is false</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
-            Status returnStatus,
+        public static State If<T>(this T board,
+            State returnState,
             Func<T, bool> condition, 
             Action<T> a, 
             Action<T> elseA)
@@ -84,7 +84,7 @@ namespace Baltin.FBT
             else
                 elseA.Invoke(board);
             
-            return returnStatus;
+            return returnState;
         }        
         
         /// <summary>
@@ -96,13 +96,13 @@ namespace Baltin.FBT
         /// <param name="func">Delegate receiving T and returning bool</param>
         /// <returns>If the condition is false then return Failure. Else return the result of func converted to Status</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
+        public static State If<T>(this T board,
             Func<T, bool> condition, 
             Func<T, bool> func)
         {
             return condition.Invoke(board)
-                ? func.Invoke(board).ToStatus()
-                : Status.Failure;
+                ? func.Invoke(board).ToState()
+                : State.Failure;
         }
 
         /// <summary>
@@ -115,14 +115,14 @@ namespace Baltin.FBT
         /// <param name="elseFunc">Alternative action if the condition is false</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
+        public static State If<T>(this T board,
             Func<T, bool> condition, 
             Func<T, bool> func, 
             Func<T, bool> elseFunc)
         {
             return condition.Invoke(board)
-                ? func.Invoke(board).ToStatus()
-                : elseFunc.Invoke(board).ToStatus();
+                ? func.Invoke(board).ToState()
+                : elseFunc.Invoke(board).ToState();
         }        
         
 #if !NET9_0_OR_GREATER
@@ -172,15 +172,15 @@ namespace Baltin.FBT
         /// <param name="elseFunc"></param>
         /// <returns>If the condition is false return Failure. Else return inverted value of the func</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalInverter<T>(this T board,
+        public static State ConditionalInverter<T>(this T board,
             Func<T, bool> condition,
-            Func<T, Status> func, 
-            Func<T, Status> elseFunc = null) 
+            Func<T, State> func, 
+            Func<T, State> elseFunc = null) 
             =>  condition.Invoke(board) 
                 ? board.Inverter(func) 
                 : elseFunc != null 
                     ? board.Inverter(elseFunc) 
-                    : Status.Failure;
+                    : State.Failure;
         
         /// <summary>
         /// Check condition before Selector
@@ -196,17 +196,17 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Selector</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSelector<T>(this T board,
+        public static State ConditionalSelector<T>(this T board,
             Func<T, bool> condition, 
-            Func<T, Status> f1,
-            Func<T, Status> f2,
-            Func<T, Status> f3 = null,
-            Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null,
-            Func<T, Status> f6 = null) 
+            Func<T, State> f1,
+            Func<T, State> f2,
+            Func<T, State> f3 = null,
+            Func<T, State> f4 = null,
+            Func<T, State> f5 = null,
+            Func<T, State> f6 = null) 
             => condition.Invoke(board)
                 ? board.Selector(f1, f2, f3, f4, f5, f6)
-                : Status.Failure;
+                : State.Failure;
         
         /// <summary>
         /// Check condition before Sequencer
@@ -221,17 +221,17 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Sequencer</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalSequencer<T>(this T board,
+        public static State ConditionalSequencer<T>(this T board,
             Func<T, bool> condition, 
-            Func<T, Status> f1,
-            Func<T, Status> f2,
-            Func<T, Status> f3 = null,
-            Func<T, Status> f4 = null,
-            Func<T, Status> f5 = null,
-            Func<T, Status> f6 = null) 
+            Func<T, State> f1,
+            Func<T, State> f2,
+            Func<T, State> f3 = null,
+            Func<T, State> f4 = null,
+            Func<T, State> f5 = null,
+            Func<T, State> f6 = null) 
             => condition.Invoke(board)
                 ? board.Sequencer(f1, f2, f3, f4, f5, f6)
-                : Status.Failure;
+                : State.Failure;
         
         /// <summary>
         /// Check condition and then Execute Void actions

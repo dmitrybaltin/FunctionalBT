@@ -119,15 +119,15 @@ namespace Baltin.FBT.Example
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status PreUpdate()
+        public State PreUpdate()
         {
             _playerWorldPos = _player.position;
             PlayerDistance = Vector3.Distance(_playerWorldPos, _body.worldCenterOfMass);
 
-            return Status.Success;
+            return State.Success;
         }
 
-        public Status OscillateScale(float fromScale, float toScale, float period)
+        public State OscillateScale(float fromScale, float toScale, float period)
         {
             if (period <= 0)
                 throw new ArgumentException("Period must be greater than zero.", nameof(period));
@@ -139,10 +139,10 @@ namespace Baltin.FBT.Example
 
             _body.transform.localScale = _initialLocalScale * Mathf.Lerp(fromScale, toScale, triangleWave);
             
-            return Status.Success;
+            return State.Success;
         }
 
-        public Status SetScale (float scale, float smoothTime)
+        public State SetScale (float scale, float smoothTime)
         {
             if (scale < 0)
                 throw new ArgumentException("Scale values must be non-negative.");
@@ -154,22 +154,22 @@ namespace Baltin.FBT.Example
                     _body.transform.localScale,
                     _initialLocalScale * scale,
                     Time.deltaTime/smoothTime);
-            return Status.Success;
+            return State.Success;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status SetColor(Color color)
+        public State SetColor(Color color)
         {
             _meshRenderer.material.SetColor(ColorPropertyID, color);
-            return Status.Success;
+            return State.Success;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Status AddForce(float playerForce)
+        public State AddForce(float playerForce)
         {
             var force = (_playerWorldPos - _body.worldCenterOfMass) * (playerForce * Time.deltaTime);
             _body.AddForce(force, ForceMode.VelocityChange);
-            return Status.Success;
+            return State.Success;
         }
     }
 }
