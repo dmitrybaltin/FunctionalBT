@@ -104,7 +104,7 @@ namespace Baltin.FBT
             Func<T, bool> func)
         {
             return condition.Invoke(board)
-                ? func.Invoke(board).ToState()
+                ? func.Invoke(board).ToStatus()
                 : Status.Failure;
         }
 
@@ -124,8 +124,8 @@ namespace Baltin.FBT
             Func<T, bool> elseFunc)
         {
             return condition.Invoke(board)
-                ? func.Invoke(board).ToState()
-                : elseFunc.Invoke(board).ToState();
+                ? func.Invoke(board).ToStatus()
+                : elseFunc.Invoke(board).ToStatus();
         }        
         
 #if !NET9_0_OR_GREATER

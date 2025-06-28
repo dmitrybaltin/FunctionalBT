@@ -32,8 +32,10 @@ namespace Baltin.FBT
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ToState(this bool value) => 
+        public static Status ToStatus(this bool value) => 
             value ? Status.Success : Status.Failure;
+
+        //public static UniTask<Status> ToUniTask(this Status status) => UniTask.FromResult(status);
     }
     
     /// <summary>
