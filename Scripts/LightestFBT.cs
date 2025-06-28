@@ -42,7 +42,7 @@ namespace Baltin.FBT
     /// 3. Extremely fast, because here inside there are only the simplest conditions, loops and procedure calls
     /// </summary>
     /// <typeparam name="T">A type of 'blackboard' that is an interface to the data and behavior of the controlled object.</typeparam>
-    public class LightestFbt<T>
+    public static class LightestFbt
     {
         /// <summary>
         /// Classic inverter node
@@ -51,7 +51,7 @@ namespace Baltin.FBT
         /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Inverter(T board, Func<T, Status> func)
+        public static Status Inverter<T>(this T board, Func<T, Status> func)
             => func.Invoke(board).Invert();
         
         /// <summary>
@@ -62,7 +62,7 @@ namespace Baltin.FBT
         /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func) 
+        public static Status If<T>(this T board, Func<T, bool> condition, Func<T, Status> func) 
             => condition.Invoke(board) ? func.Invoke(board): Status.Failure;
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Baltin.FBT
         /// <param name="elseFunc">Action to execute if condition is false. Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func, Func<T, Status> elseFunc) 
+        public static Status If<T>(this T board, Func<T, bool> condition, Func<T, Status> func, Func<T, Status> elseFunc) 
             => condition.Invoke(board) ? func.Invoke(board) : elseFunc.Invoke(board);
 
 #if !NET9_0_OR_GREATER
@@ -93,7 +93,7 @@ namespace Baltin.FBT
         /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Selector(T board,
+        public static Status Selector<T>(this T board,
             Func<T, Status> f1,
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
@@ -129,7 +129,7 @@ namespace Baltin.FBT
         /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board,
+        public static Status Sequencer<T>(this T board,
             Func<T, Status> f1,
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
@@ -161,7 +161,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Actions returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Selector(T board, 
+        public static Status Selector<T>(this T board, 
             params ReadOnlySpan<Func<T, Status>> funcs
             )
         {
@@ -181,7 +181,7 @@ namespace Baltin.FBT
         /// <param name="funcs">Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board, 
+        public static Status Sequencer<T>(this T board, 
             params ReadOnlySpan<Func<T, Status>> funcs
             )
         {

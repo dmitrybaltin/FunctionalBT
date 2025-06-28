@@ -54,24 +54,24 @@ namespace Baltin.FBT.Example
     /// <summary>
     /// Behavior Tree definition
     /// </summary>
-    public class NpcFbt : ExtendedFbt<NpcBoard> //Parented from ExtendedFbt<NpcBoard> to use node methods 
+    public class NpcFbt 
     {
         public static void Execute(NpcBoard b) =>
-            Sequencer(b,    //Classic Sequencer node
+            b.Sequencer(    //Classic Sequencer node
                 static b => b.PreUpdate(),  //The first child of Sequencer that is a classic Action node realized as a delegate Func<NpcBoard, Status> 
-                static b => Selector(b,     //The first child of Sequencer is a Classic Selector node
-                    static b => If(b,       //The first child of Sequencer a Classic Conditional node 
+                static b => b.Selector(     //The first child of Sequencer is a Classic Selector node
+                    static b => b.If(       //The first child of Sequencer a Classic Conditional node 
                         static b => b.PlayerDistance < 1f,  //Condition
-                        static b => Sequencer(b,            //This Sequencer node is executed when the condition above is true 
+                        static b => b.Sequencer(            //This Sequencer node is executed when the condition above is true 
                             static b => b.SetColor(Color.red),
                             static b => b.OscillateScale(1, 1.5f, 0.25f),
                             static b => b.AddForce(b.Config.baseClosePlayerForce))),
-                    static b => ConditionalSequencer(b,     //Using ConditionalSequencer instead of If + Sequencer (see above)   
+                    static b => b.ConditionalSequencer(     //Using ConditionalSequencer instead of If + Sequencer (see above)   
                         static b => b.PlayerDistance < 3f,
                         static b => b.SetColor(Color.magenta),
                         static b => b.SetScale(1f, 0.1f),
                         static b => b.AddForce(b.Config.baseClosePlayerForce)),
-                    static b => ConditionalSequencer(b,         
+                    static b => b.ConditionalSequencer(         
                         static b => b.PlayerDistance < 8f,
                         static b => b.SetColor(Color.yellow),
                         static b => b.SetScale(1f, 1f),
