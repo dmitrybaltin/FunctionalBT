@@ -21,25 +21,10 @@ namespace Baltin.FBT
         /// <param name="a">Delegate receiving T and returning void</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status VoidAction<T>(this T board, Status returnStatus, Action<T> a)
+        public static bool VoidAction<T>(this T board, bool returnStatus, Action<T> a)
         {
             a.Invoke(board);
             return returnStatus;
-        }
-
-        /// <summary>
-        /// Action node, using Func<T, bool> as a delegate to execute
-        /// Return Status debending on the result of delegate   
-        /// </summary>
-        /// <param name="board">Blackboard object</param>
-        /// <param name="func">Delegate receiving T and returning bool</param>
-        /// <returns>If 'func' return true then returns Success else return Failure</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status BoolAction<T>(this T board, Func<T, bool> func)
-        {
-            return func.Invoke(board) 
-                ? Status.Success
-                : Status.Failure;
         }
 
         /// <summary>
@@ -52,13 +37,13 @@ namespace Baltin.FBT
         /// <param name="a">Delegate receiving T and returning Status</param>
         /// <returns>If the condition is false then return Failure. Else return the value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
-            Status returnStatus,
+        public static bool If<T>(this T board,
+            bool returnStatus,
             Func<T, bool> condition, 
             Action<T> a)
         {
             if (!condition.Invoke(board)) 
-                return Status.Failure;
+                return false;
             
             a.Invoke(board);
             return returnStatus;
@@ -75,8 +60,8 @@ namespace Baltin.FBT
         /// <param name="elseA">Alternative action if the condition is false</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
-            Status returnState,
+        public static bool If<T>(this T board,
+            bool returnState,
             Func<T, bool> condition, 
             Action<T> a, 
             Action<T> elseA)
@@ -98,14 +83,12 @@ namespace Baltin.FBT
         /// <param name="func">Delegate receiving T and returning bool</param>
         /// <returns>If the condition is false then return Failure. Else return the result of func converted to Status</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(
+        public static bool If<T>(
             this T board,
             Func<T, bool> condition, 
             Func<T, bool> func)
         {
-            return condition.Invoke(board)
-                ? func.Invoke(board).ToStatus()
-                : Status.Failure;
+            return condition.Invoke(board) && func.Invoke(board);
         }
 
         /// <summary>
@@ -118,14 +101,14 @@ namespace Baltin.FBT
         /// <param name="elseFunc">Alternative action if the condition is false</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If<T>(this T board,
+        public static bool If<T>(this T board,
             Func<T, bool> condition, 
             Func<T, bool> func, 
             Func<T, bool> elseFunc)
         {
             return condition.Invoke(board)
-                ? func.Invoke(board).ToStatus()
-                : elseFunc.Invoke(board).ToStatus();
+                ? func.Invoke(board)
+                : elseFunc.Invoke(board);
         }        
         
 #if !NET9_0_OR_GREATER
@@ -143,8 +126,8 @@ namespace Baltin.FBT
         /// <param name="a6">Optional delegate receiving T and returning Status</param>
         /// <returns>The value of 'returnStatus'</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status VoidActions<T>(this T board,
-            Status returnStatus,
+        public static bool VoidActions<T>(this T board,
+            bool returnStatus,
             Action<T> a1,
             Action<T> a2,
             Action<T> a3 = null,
@@ -175,17 +158,15 @@ namespace Baltin.FBT
         /// <param name="elseFunc"></param>
         /// <returns>If the condition is false return Failure. Else return inverted value of the func</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> ConditionalInverter<T>(
+        public static async UniTask<bool> ConditionalInverter<T>(
             this T board,
             CancellationToken token,
             Func<T, bool> condition,
-            Func<T, CancellationToken, UniTask<Status>> func, 
-            Func<T, CancellationToken, UniTask<Status>> elseFunc = null) 
+            Func<T, CancellationToken, UniTask<bool>> func, 
+            Func<T, CancellationToken, UniTask<bool>> elseFunc = null) 
             =>  condition.Invoke(board) 
                 ? await board.Inverter(token, func) 
-                : elseFunc != null 
-                    ? await board.Inverter(token, elseFunc) 
-                    : Status.Failure;
+                : elseFunc != null && await board.Inverter(token, elseFunc);
         
         /// <summary>
         /// Check condition before Selector
@@ -201,19 +182,17 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Selector</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> ConditionalSelector<T>(
+        public static async UniTask<bool> ConditionalSelector<T>(
                 this T board,
                 CancellationToken token,
                 Func<T, bool> condition,
-                Func<T, CancellationToken, UniTask<Status>> f1,
-                Func<T, CancellationToken, UniTask<Status>> f2,
-                Func<T, CancellationToken, UniTask<Status>> f3 = null,
-                Func<T, CancellationToken, UniTask<Status>> f4 = null,
-                Func<T, CancellationToken, UniTask<Status>> f5 = null,
-                Func<T, CancellationToken, UniTask<Status>> f6 = null) 
-            => condition.Invoke(board)
-                ? await board.Selector(token, f1, f2, f3, f4, f5, f6)
-                : Status.Failure;
+                Func<T, CancellationToken, UniTask<bool>> f1,
+                Func<T, CancellationToken, UniTask<bool>> f2,
+                Func<T, CancellationToken, UniTask<bool>> f3 = null,
+                Func<T, CancellationToken, UniTask<bool>> f4 = null,
+                Func<T, CancellationToken, UniTask<bool>> f5 = null,
+                Func<T, CancellationToken, UniTask<bool>> f6 = null) 
+            => condition.Invoke(board) && await board.Selector(token, f1, f2, f3, f4, f5, f6);
         
         /// <summary>
         /// Check condition before Sequencer
@@ -228,17 +207,15 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns>If the condition is false return Failure. Else return the result of Sequencer</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> ConditionalSequencer<T>(this T board, CancellationToken token,
+        public static async UniTask<bool> ConditionalSequencer<T>(this T board, CancellationToken token,
                 Func<T, bool> condition, 
-                Func<T, CancellationToken, UniTask<Status>> f1,
-                Func<T, CancellationToken, UniTask<Status>> f2,
-                Func<T, CancellationToken, UniTask<Status>> f3 = null,
-                Func<T, CancellationToken, UniTask<Status>> f4 = null,
-                Func<T, CancellationToken, UniTask<Status>> f5 = null,
-                Func<T, CancellationToken, UniTask<Status>> f6 = null) 
-            => condition.Invoke(board)
-                ? await board.Sequencer(token, f1, f2, f3, f4, f5, f6)
-                : Status.Failure;
+                Func<T, CancellationToken, UniTask<bool>> f1,
+                Func<T, CancellationToken, UniTask<bool>> f2,
+                Func<T, CancellationToken, UniTask<bool>> f3 = null,
+                Func<T, CancellationToken, UniTask<bool>> f4 = null,
+                Func<T, CancellationToken, UniTask<bool>> f5 = null,
+                Func<T, CancellationToken, UniTask<bool>> f6 = null) 
+            => condition.Invoke(board) && await board.Sequencer(token, f1, f2, f3, f4, f5, f6);
         
         /// <summary>
         /// Check condition and then Execute Void actions
@@ -254,8 +231,8 @@ namespace Baltin.FBT
         /// <param name="a6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalVoidActions<T>(this T board,
-            Status returnStatus, 
+        public static bool ConditionalVoidActions<T>(this T board,
+            bool returnStatus, 
             Func<T, bool> condition, 
             Action<T> a1,
             Action<T> a2,
@@ -263,9 +240,7 @@ namespace Baltin.FBT
             Action<T> a4 = null,
             Action<T> a5 = null,
             Action<T> a6 = null) 
-            => condition.Invoke(board)
-                ? board.VoidActions(returnStatus, a1, a2, a3, a4, a5, a6)
-                : Status.Failure;
+            => condition.Invoke(board) && board.VoidActions(returnStatus, a1, a2, a3, a4, a5, a6);
 
 #endif            
         

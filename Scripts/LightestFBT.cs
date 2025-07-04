@@ -7,37 +7,6 @@ using UnityEngine.Windows.Speech;
 
 namespace Baltin.FBT
 {
-    public enum Status
-    {
-        Success = 0,
-        Failure = 1,
-    }
-   
-    public static class StatusExtensions
-    {
-        /// <summary>
-        /// Invert Status
-        /// </summary>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Invert(this Status status)
-        {
-            return status switch
-            {
-                Status.Failure => Status.Success,
-                Status.Success => Status.Failure,
-                _ => status,
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ToStatus(this bool value) => 
-            value ? Status.Success : Status.Failure;
-
-        //public static UniTask<Status> ToUniTask(this Status status) => UniTask.FromResult(status);
-    }
-    
     /// <summary>
     /// Functional Behavior Tree pattern
     /// 1. Convenient for debugging, since you can set breakpoint both on tree nodes and on delegates passed as parameters
@@ -55,43 +24,45 @@ namespace Baltin.FBT
         /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> Inverter<T>(
+        public static async UniTask<bool> Inverter<T>(
             this T board, 
             CancellationToken ct, 
-            Func<T, CancellationToken, UniTask<Status>> func)
-            => (await func.Invoke(board, ct)).Invert();
-        
+            Func<T, CancellationToken, UniTask<bool>> func)
+            => !await func.Invoke(board, ct);
+
         /// <summary>
         /// Execute the given func delegate if the given condition is true 
         /// </summary>
         /// <param name="board">Blackboard object</param>
+        /// <param name="ct"></param>
         /// <param name="condition">Condition given as a delegate returning true</param>
         /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> If<T>(
+        public static async UniTask<bool> If<T>(
             this T board, 
             CancellationToken ct, 
             Func<T, bool> condition, 
-            Func<T, CancellationToken, UniTask<Status>> func) 
-            => condition.Invoke(board) ? await func.Invoke(board, ct): Status.Failure;
+            Func<T, CancellationToken, UniTask<bool>> func) 
+            => condition.Invoke(board) && await func.Invoke(board, ct);
 
         /// <summary>
         /// Execute the given 'func' delegate if the given condition is true
         /// Else execute 'elseFunc' delegate
         /// </summary>
         /// <param name="board">Blackboard object</param>
+        /// <param name="ct"></param>
         /// <param name="condition">Condition given as a delegate returning true</param>
         /// <param name="func">Action to execute if condition is true. Delegate receiving T and returning Status</param>
         /// <param name="elseFunc">Action to execute if condition is false. Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> If<T>(
+        public static async UniTask<bool> If<T>(
             this T board, 
             CancellationToken ct, 
             Func<T, bool> condition, 
-            Func<T, CancellationToken, UniTask<Status>> func, 
-            Func<T, CancellationToken, UniTask<Status>> elseFunc) 
+            Func<T, CancellationToken, UniTask<bool>> func, 
+            Func<T, CancellationToken, UniTask<bool>> elseFunc) 
             => condition.Invoke(board) ? await func.Invoke(board, ct) : await elseFunc.Invoke(board, ct);
 
 #if !NET9_0_OR_GREATER
@@ -110,26 +81,26 @@ namespace Baltin.FBT
         /// <param name="token"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> Selector<T>(this T board, CancellationToken token,
-            Func<T, CancellationToken, UniTask<Status>> f1,
-            Func<T, CancellationToken, UniTask<Status>> f2,
-            Func<T, CancellationToken, UniTask<Status>> f3 = null,
-            Func<T, CancellationToken, UniTask<Status>> f4 = null,
-            Func<T, CancellationToken, UniTask<Status>> f5 = null,
-            Func<T, CancellationToken, UniTask<Status>> f6 = null,
-            Func<T, CancellationToken, UniTask<Status>> f7 = null,
-            Func<T, CancellationToken, UniTask<Status>> f8 = null)
+        public static async UniTask<bool> Selector<T>(this T board, CancellationToken token,
+            Func<T, CancellationToken, UniTask<bool>> f1,
+            Func<T, CancellationToken, UniTask<bool>> f2,
+            Func<T, CancellationToken, UniTask<bool>> f3 = null,
+            Func<T, CancellationToken, UniTask<bool>> f4 = null,
+            Func<T, CancellationToken, UniTask<bool>> f5 = null,
+            Func<T, CancellationToken, UniTask<bool>> f6 = null,
+            Func<T, CancellationToken, UniTask<bool>> f7 = null,
+            Func<T, CancellationToken, UniTask<bool>> f8 = null)
         {
-            var s = f1 is null ? Status.Failure : await f1.Invoke(board, token); if(s is Status.Success) return s;
-            s = f2 is null ? Status.Failure : await f2.Invoke(board, token); if(s is Status.Success) return s;
-            s = f3 is null ? Status.Failure : await f3.Invoke(board, token); if(s is Status.Success) return s;
-            s = f4 is null ? Status.Failure : await f4.Invoke(board, token); if(s is Status.Success) return s;
-            s = f5 is null ? Status.Failure : await f5.Invoke(board, token); if(s is Status.Success) return s;
-            s = f6 is null ? Status.Failure : await f6.Invoke(board, token); if(s is Status.Success) return s;
-            s = f7 is null ? Status.Failure : await f7.Invoke(board, token); if(s is Status.Success) return s;
-            s = f8 is null ? Status.Failure : await f8.Invoke(board, token); if(s is Status.Success) return s;
+            var s = f1 is not null && await f1.Invoke(board, token); if(s) return true;
+            s = f2 is not null && await f2.Invoke(board, token); if(s) return true;
+            s = f3 is not null && await f3.Invoke(board, token); if(s) return true;
+            s = f4 is not null && await f4.Invoke(board, token); if(s) return true;
+            s = f5 is not null && await f5.Invoke(board, token); if(s) return true;
+            s = f6 is not null && await f6.Invoke(board, token); if(s) return true;
+            s = f7 is not null && await f7.Invoke(board, token); if(s) return true;
+            s = f8 is not null && await f8.Invoke(board, token); if(s) return true;
 
-            return Status.Failure;  //todo: возможно тут Success
+            return false;
 
         }
         
@@ -147,26 +118,26 @@ namespace Baltin.FBT
         /// <param name="f8">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<Status> Sequencer<T>(this T board, CancellationToken token,
-            Func<T, CancellationToken, UniTask<Status>> f1,
-            Func<T, CancellationToken, UniTask<Status>> f2,
-            Func<T, CancellationToken, UniTask<Status>> f3 = null,
-            Func<T, CancellationToken, UniTask<Status>> f4 = null,
-            Func<T, CancellationToken, UniTask<Status>> f5 = null,
-            Func<T, CancellationToken, UniTask<Status>> f6 = null,
-            Func<T, CancellationToken, UniTask<Status>> f7 = null,
-            Func<T, CancellationToken, UniTask<Status>> f8 = null)
+        public static async UniTask<bool> Sequencer<T>(this T board, CancellationToken token,
+            Func<T, CancellationToken, UniTask<bool>> f1,
+            Func<T, CancellationToken, UniTask<bool>> f2,
+            Func<T, CancellationToken, UniTask<bool>> f3 = null,
+            Func<T, CancellationToken, UniTask<bool>> f4 = null,
+            Func<T, CancellationToken, UniTask<bool>> f5 = null,
+            Func<T, CancellationToken, UniTask<bool>> f6 = null,
+            Func<T, CancellationToken, UniTask<bool>> f7 = null,
+            Func<T, CancellationToken, UniTask<bool>> f8 = null)
         {
-            var s = f1 is null ? Status.Failure : await f1.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f2 is null ? Status.Failure : await f2.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f3 is null ? Status.Failure : await f3.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f4 is null ? Status.Failure : await f4.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f5 is null ? Status.Failure : await f5.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f6 is null ? Status.Failure : await f6.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f7 is null ? Status.Failure : await f7.Invoke(board, token); if(s is Status.Failure) return s;
-            s = f8 is null ? Status.Failure : await f8.Invoke(board, token); if(s is Status.Failure) return s;
+            var s = f1 is not null && await f1.Invoke(board, token); if(!s) return false;
+            s = f2 is not null && await f2.Invoke(board, token); if(!s) return false;
+            s = f3 is not null && await f3.Invoke(board, token); if(!s) return false;
+            s = f4 is not null && await f4.Invoke(board, token); if(!s) return false;
+            s = f5 is not null && await f5.Invoke(board, token); if(!s) return false;
+            s = f6 is not null && await f6.Invoke(board, token); if(!s) return false;
+            s = f7 is not null && await f7.Invoke(board, token); if(!s) return false;
+            s = f8 is not null && await f8.Invoke(board, token); if(!s) return false;
             
-            return Status.Success;
+            return true;
         }
 
 #endif

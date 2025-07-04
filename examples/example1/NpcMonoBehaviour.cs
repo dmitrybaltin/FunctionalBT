@@ -125,15 +125,15 @@ namespace Baltin.FBT.Example
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<Status> PreUpdate()
+        public UniTask<bool> PreUpdate()
         {
             _playerWorldPos = _player.position;
             PlayerDistance = Vector3.Distance(_playerWorldPos, _body.worldCenterOfMass);
 
-            return UniTask.FromResult(Status.Success);
+            return UniTask.FromResult(true);
         }
 
-        public UniTask<Status> OscillateScale(float fromScale, float toScale, float period)
+        public UniTask<bool> OscillateScale(float fromScale, float toScale, float period)
         {
             if (period <= 0)
                 throw new ArgumentException("Period must be greater than zero.", nameof(period));
@@ -145,10 +145,10 @@ namespace Baltin.FBT.Example
 
             _body.transform.localScale = _initialLocalScale * Mathf.Lerp(fromScale, toScale, triangleWave);
             
-            return UniTask.FromResult(Status.Success);
+            return UniTask.FromResult(true);
         }
 
-        public UniTask<Status> SetScale (float scale, float smoothTime)
+        public UniTask<bool> SetScale (float scale, float smoothTime)
         {
             if (scale < 0)
                 throw new ArgumentException("Scale values must be non-negative.");
@@ -160,22 +160,22 @@ namespace Baltin.FBT.Example
                     _body.transform.localScale,
                     _initialLocalScale * scale,
                     Time.deltaTime/smoothTime);
-            return UniTask.FromResult(Status.Success);
+            return UniTask.FromResult(true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<Status> SetColor(Color color)
+        public UniTask<bool> SetColor(Color color)
         {
             _meshRenderer.material.SetColor(ColorPropertyID, color);
-            return UniTask.FromResult(Status.Success);
+            return UniTask.FromResult(true);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<Status> AddForce(float playerForce)
+        public UniTask<bool> AddForce(float playerForce)
         {
             var force = (_playerWorldPos - _body.worldCenterOfMass) * (playerForce * Time.deltaTime);
             _body.AddForce(force, ForceMode.VelocityChange);
-            return UniTask.FromResult(Status.Success);
+            return UniTask.FromResult(true);
         }
     }
 }
