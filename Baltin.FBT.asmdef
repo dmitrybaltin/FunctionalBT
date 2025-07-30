@@ -1,3 +1,14 @@
 {
-	"name": "Baltin.FBT"
+    "name": "Baltin.FBT",
+    "rootNamespace": "Baltin.FBT",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

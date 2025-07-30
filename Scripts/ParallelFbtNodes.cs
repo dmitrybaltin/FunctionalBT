@@ -18,7 +18,7 @@ namespace Baltin.FBT
     /// Here are some controversial nodes that I am not sure are necessary.
     /// </summary>
     /// <typeparam name="T">Blackboard type</typeparam>
-    public class ExperimentalFbt<T> : ExtendedFbt<T>
+    public static class ParallelFbtNodes
     {
         /// <summary>
         /// Current status of the parallel node aggregating statuses of all the children nodes
@@ -99,7 +99,7 @@ namespace Baltin.FBT
         /// <param name="f5">Optional delegate receiving T and returning Status</param>
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
-        public static Status Parallel(T board, 
+        public static Status Parallel<T>(this T board, 
             ParallelPolicy policy, 
             Func<T, Status> f1,
             Func<T, Status> f2,
@@ -129,7 +129,7 @@ namespace Baltin.FBT
         /// <param name="policy">Gives the rules of conversion the statuses of children nodes to overall status</param>
         /// <param name="funcs"></param>
         /// <returns></returns>
-        public static Status Parallel(T board,ParallelPolicy policy,params ReadOnlySpan<Func<T, Status>> funcs)
+        public static Status Parallel(this T board,ParallelPolicy policy,params ReadOnlySpan<Func<T, Status>> funcs)
         {
             var parallelStatus = new ParallelStatus();
             
@@ -155,7 +155,7 @@ namespace Baltin.FBT
         /// <param name="f6">Optional delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalParallel(T board,
+        public static Status ConditionalParallel<T>(this T board,
             ParallelPolicy policy,
             Func<T, bool> condition,
             Func<T, Status> f1,
@@ -177,7 +177,7 @@ namespace Baltin.FBT
         /// <param name="funcs"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ConditionalParallel(T board,
+        public static Status ConditionalParallel<T>(this T board,
             ParallelPolicy policy,
             Func<T, bool> condition,
             params ReadOnlySpan<Func<T, Status>> funcs)
