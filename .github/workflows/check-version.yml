@@ -1,0 +1,32 @@
+name: Check package version
+
+on:
+  pull_request:
+    branches:
+      - main
+      - test
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get last Git tag
+        id: tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
+
+      - name: Get package.json version
+        run: |
+          VERSION=$(grep '"version"' package.json | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Check version increment
+        run: |
+          if [ "$VERSION" == "${LAST_TAG#v}" ]; then
+            echo "Version not incremented! Last tag: $LAST_TAG, package.json: $VERSION"
+            exit 1
+          fi
