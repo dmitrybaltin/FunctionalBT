@@ -1,6 +1,6 @@
 {
   "name": "com.baltin.fbt",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "displayName": "FunctionalBT",
   "description": "Functional Behavior Tree Design Pattern Implementation",
   "unity": "2019.3",
