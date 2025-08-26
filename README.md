@@ -1,4 +1,4 @@
-![FBT_Logo](Docs/fbt_icon.png)
+![FBT_Logo](.docs/fbt_icon.png)
 
 # "Functional Behavior Tree" Design Pattern in C#
 
@@ -100,7 +100,7 @@ Key points to note:
 
 As shown in the example code, this implementation is extremely simple, zero allocation and fast and focused purely on logic, making it easy to debug. You can set breakpoints on any anonymous delegate or tree node function. When the execution reaches these breakpoints, the debugger will pause correctly, allowing you to inspect the state at that point.
 Here is an illustration of breakpoints in the code:
-![Example of debugging](Docs/fbt_example.png)
+![Example of debugging](.docs/fbt_example.png)
 
 ## Functional Behavior Tree pattern code for Unity
 
