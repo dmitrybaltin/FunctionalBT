@@ -28,7 +28,7 @@ This package includes the full source code of Functional Behavior Tree (FBT) par
 1. **Clear and Concise Behavior Tree Definition**  
    Behavior trees are defined directly in code using functions calls and lambda expressions, resulting in clear and compact logic.   
 
-2. **Ease of Debugging**  
+2. **Ease Debug**  
    The tree definition and execution code are the same, which means you can place breakpoints inside any anonymous delegate, and they will work correctly.  
    No special complex "behaviour tree debugger" is required, you will use your favorite C# IDE.
 
