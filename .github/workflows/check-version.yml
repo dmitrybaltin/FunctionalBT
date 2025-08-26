@@ -12,21 +12,27 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: Get last Git tag
-        id: tag
+      - name: Get previous version from base branch
         run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
-          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
+          echo "Base branch (destination of PR): $GITHUB_BASE_REF"
+          VERSION_PREV=$(git show origin/${GITHUB_BASE_REF}:package.json | grep '"version"' | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
+          echo "Previous version from base branch: $VERSION_PREV"
+          echo "VERSION_PREV=$VERSION_PREV" >> $GITHUB_ENV
 
-      - name: Get package.json version
+      - name: Get current version from PR
         run: |
-          VERSION=$(grep '"version"' package.json | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          VERSION_CUR=$(grep '"version"' package.json | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
+          echo "Current version in PR: $VERSION_CUR"
+          echo "VERSION_CUR=$VERSION_CUR" >> $GITHUB_ENV
 
       - name: Check version increment
         run: |
-          if [ "$VERSION" == "${LAST_TAG#v}" ]; then
-            echo "Version not incremented! Last tag: $LAST_TAG, package.json: $VERSION"
+          if [ "$VERSION_CUR" == "$VERSION_PREV" ]; then
+            echo "Version not incremented! Previous: $VERSION_PREV, current: $VERSION_CUR"
             exit 1
+          else
+            echo "Version increment check passed: $VERSION_PREV → $VERSION_CUR"
           fi
