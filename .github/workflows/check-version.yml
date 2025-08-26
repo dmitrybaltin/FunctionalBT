@@ -18,8 +18,13 @@ jobs:
       - name: Get previous version from base branch
         run: |
           echo "Base branch (destination of PR): $GITHUB_BASE_REF"
-          VERSION_PREV=$(git show origin/${GITHUB_BASE_REF}:package.json | grep '"version"' | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
-          echo "Previous version from base branch: $VERSION_PREV"
+          if git show origin/${GITHUB_BASE_REF}:package.json > /dev/null 2>&1; then
+            VERSION_PREV=$(git show origin/${GITHUB_BASE_REF}:package.json | grep '"version"' | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
+            echo "Previous version from base branch: $VERSION_PREV"
+          else
+            VERSION_PREV="0.0.0"
+            echo "No package.json in base branch, using default version: $VERSION_PREV"
+          fi
           echo "VERSION_PREV=$VERSION_PREV" >> $GITHUB_ENV
 
       - name: Get current version from PR
