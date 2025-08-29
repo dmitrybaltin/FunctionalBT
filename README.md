@@ -534,10 +534,20 @@ These minimal operations ensure that the code runs efficiently with little overh
 #### Potential Bottleneck with DOTS, Jobs, and Burst
 If your project is fully built on DOTS and you are actively using Jobs and the Burst compiler for speed optimization, FBT could potentially become a bottleneck. The reason is that the library is built around delegates, which are reference types and not compatible with Jobs and Burst optimizations.
 
-#### Potential Solution
-If this becomes a problem, one potential solution could involve transitioning from delegates to function pointers. Function pointers are value types and could be more compatible with Jobs and Burst, potentially improving performance in such scenarios.
+#### Potential Solutions
 
-Please let me know if this becomes an issue, and I'd be happy to explore possible adjustments.
+So far I haven’t needed to optimize this solution in practice, but there is definitely room for optimization.
+
+Since FBT and UniTaskFBT rely on reference types (delegates), they cannot be placed entirely into Unity Jobs. However, there are several other approaches worth exploring:
+
+- **Parallel execution of the tree.**  
+  A synchronous tree can be parallelized with `Parallel.For`. In experiments with many NPCs this gave a 2–5x speedup (depending on device and build type, mono/IL2CPP) compared to a regular `for` loop. The caveat is that the code must be thread-safe, and engine functions cannot be called from inside `Parallel.For`.
+
+- **Batching engine calls.**  
+  The tree nodes themselves are lightweight; the heavy part is engine calls triggered from the tree. One optimization is batching, e.g. using `RaycastCommand`. Instead of calling `Physics.Raycast` directly from the tree, commands can be queued and executed in a batch before the next tick, with the tree resuming on results. This also works well in combination with `Parallel.For`.
+
+- **Running the tree on a separate thread.**  
+  In theory the tree could be executed in its own thread. In practice this likely brings all the downsides of multithreading without much benefit.
 
 ### Asynchronous Operations
 
