@@ -341,16 +341,14 @@ The main point here is an **each node is a static function rather than an object
 #endif
 ```
 
-There is one peculiar detail here: the Selector and Sequencer functions are implemented with multiple arguments that have default values, effectively functioning as variadic functions, instead of using the classic params arrays.
+There is one notable detail: the Selector and Sequencer functions use multiple arguments with default values, effectively acting as variadic functions, instead of relying on the classic `params` arrays.
 
-This choice is intentional, not a bug. The params arrays feature is not memory-efficient because it creates a new array on the heap each time the function is executed.
+This design is intentional. `params` arrays are inefficient because they create a new array on the heap every time the function is called.
 
-The downside of the chosen method is the limited maximum number of child nodes (8). However, this is not a significant issue.
-This number (8) was chosen based on practical experience and is almost always sufficient for behavior tree logic.
-If more child nodes are needed, there are two simple solutions:
+The drawback of this approach is a limit on the maximum number of child nodes (8). In practice, however, this is rarely an issue. The number 8 was chosen based on experience and is usually sufficient for behavior tree logic. If more nodes are required, there are two simple solutions:
 
-1. Place several nodes hierarchically, one on top of the other. Each additional "level" in this hierarchy exponentially increases the number of child nodes.
-1. Modify the Sequencer and Selector functions to add more input arguments (this takes about 10 minutes of coding).
+1. Organize nodes hierarchically, placing them one inside another. Each extra "level" in the hierarchy exponentially increases the possible number of children.  
+1. Extend the Sequencer and Selector functions by adding more input arguments (this takes about 10 minutes of coding).
 
 ## Functional Behavior Tree pattern code for C#13 (not for Unity)
 
@@ -417,9 +415,9 @@ However, since Unity likely won't support C# 13 in the near future, you'll need 
 Below is the code from an earlier version of the pattern.  
 
 ```csharp
-    public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
+    public class MyFunctionalBt : FunctionalBt <ActorBoard>
     {
-        public MyLaconicFunctionalBt(ActorBoard board) : base(board) { }
+        public MyFunctionalBt(ActorBoard board) : base(board) { }
         
         public Status Execute()
         {
@@ -455,18 +453,17 @@ By the way, Fluid Behavior Tree library have the same memory allocation problems
 I eventually switched to the following implementation:
 
 ```csharp
-    public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
+    public static class MyFunctionalBt
     {
-        public static Status Execute(ActorBoard b)
-        {
-            return
-                Selector(
-                    b => b.SetColor(Color.grey),
-                    b => b.SetColor(Color.red));
-        }
+        public static Status Execute(ActorBoard b) => 
+             b.Selector(
+                 b => b.SetColor(Color.grey),
+                 b => b.SetColor(Color.red));
     }
-    public class
+
+    public class ActorBoard 
     {
+        //.....
         Status SetColor(Color color)
         {
             View.SetColor(color);
