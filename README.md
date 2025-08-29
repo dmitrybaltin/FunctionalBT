@@ -213,8 +213,8 @@ This approach results in clean, readable, and efficient code with minimal boiler
 # Functional Behavior Tree pattern code for Unity
 
 Below is a full implementation of the Functional Behavior Tree pattern, including all the classic nodes (**Selector**, **Sequencer**, **Conditional**, and **Inverter**) and the required supporting code: the **Status** enum and a couple of extension methods for it.  
-In total, the code is just over 100 lines, including comments.  
-You can also find the same code in the file [LightestFBT.cs](src/LightestFBT.cs).
+In total, the code is just over ~100 lines, including comments.  
+You can also find the same code in the file [MainNodes.cs](src/MainNodes.cs).
 
 The main point here is an **each node is a static function rather than an object**. That's why the code is minimal and contains the core logic only:
 1. Every node - is the only static function, containing the required logic.
@@ -230,30 +230,7 @@ The main point here is an **each node is a static function rather than an object
         Running = 2,
     }
 
-    public static class StatusExtensions
-    {
-        /// <summary>
-        /// Invert Status
-        /// </summary>
-        /// <param name="status">Source status to invert</param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Invert(this Status status)
-        {
-            return status switch
-            {
-                Status.Failure => Status.Success,
-                Status.Success => Status.Failure,
-                _ => Status.Running,
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status ToStatus(this bool value) => 
-            value ? Status.Success : Status.Failure;
-    }
-    
-    public class LightestFbt<T>
+    public static class MainNodes
     {
         /// <summary>
         /// Classic inverter node
@@ -262,7 +239,7 @@ The main point here is an **each node is a static function rather than an object
         /// <param name="func">Delegate receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Inverter(T board, Func<T, Status> func)
+        public static Status Inverter<T>(this T board, Func<T, Status> func)
             => func.Invoke(board).Invert();
         
         /// <summary>
@@ -273,14 +250,38 @@ The main point here is an **each node is a static function rather than an object
         /// <param name="func">Action to execute if condition is true. Delegates receiving T and returning Status</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status If(T board, Func<T, bool> condition, Func<T, Status> func) 
+        public static Status If<T>(this T board, Func<T, bool> condition, Func<T, Status> func) 
             => condition.Invoke(board) ? func.Invoke(board): Status.Failure;
 
         /// <summary>
+        /// Execute the given 'func' delegate if the given condition is true
+        /// Else execute 'elseFunc' delegate
+        /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="condition">Condition given as a delegate returning true</param>
+        /// <param name="func">Action to execute if condition is true. Delegate receiving T and returning Status</param>
+        /// <param name="elseFunc">Action to execute if condition is false. Delegate receiving T and returning Status</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Status If<T>(this T board, Func<T, bool> condition, Func<T, Status> func, Func<T, Status> elseFunc) 
+            => condition.Invoke(board) ? func.Invoke(board) : elseFunc.Invoke(board);
+
+#if !NET9_0_OR_GREATER
+        /// <summary>
         /// Classic selector node
         /// </summary>
+        /// <param name="board">Blackboard object</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <param name="f7">Optional delegate receiving T and returning Status</param>
+        /// <param name="f8">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Selector(T board,
+        public static Status Selector<T>(this T board,
             Func<T, Status> f1,
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
@@ -306,8 +307,17 @@ The main point here is an **each node is a static function rather than an object
         /// Classic sequencer node
         /// </summary>
         /// <param name="board">Blackboard object</param>
+        /// <param name="f1">Delegate receiving T and returning Status</param>
+        /// <param name="f2">Delegate receiving T and returning Status</param>
+        /// <param name="f3">Optional delegate receiving T and returning Status</param>
+        /// <param name="f4">Optional delegate receiving T and returning Status</param>
+        /// <param name="f5">Optional delegate receiving T and returning Status</param>
+        /// <param name="f6">Optional delegate receiving T and returning Status</param>
+        /// <param name="f7">Optional delegate receiving T and returning Status</param>
+        /// <param name="f8">Optional delegate receiving T and returning Status</param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Status Sequencer(T board,
+        public static Status Sequencer<T>(this T board,
             Func<T, Status> f1,
             Func<T, Status> f2,
             Func<T, Status> f3 = null,
@@ -397,13 +407,14 @@ For more details, see the official documentation on [params collections](https:/
 ```
 
 However, since Unity likely won't support C# 13 in the near future, you'll need to use a different approach, as shown earlier. While this alternative is not as syntactically elegant, it is still an efficient solution for handling multiple arguments.
+
 ---
 
 ## Achieving Zero Memory Allocation
 
 ### The Problem
 
-Below is the code from an earlier version of the pattern:
+Below is the code from an earlier version of the pattern.  
 
 ```csharp
     public class MyLaconicFunctionalBt : LaconicFunctionalBt <ActorBoard>
@@ -436,7 +447,8 @@ It works not so bad but unfortunatelly allocated significant memory due to:
 2. **Dynamic Arrays:**
    - Functions like `Sequencer` and `Selector` used `params`, leading to heap-allocated arrays for each call.
 
-Memory allocation during each game loop cycle, especially for large scenes with many NPCs, caused performance bottlenecks.
+Memory allocation during each game loop cycle, especially for large scenes with many NPCs, caused performance bottlenecks. 
+By the way, Fluid Behavior Tree library have the same memory allocation problems.
 
 ### Solutions
 
@@ -536,13 +548,9 @@ A limitation of the current solution is its handling of asynchronous operations.
 
 For example, when performing raycasts, especially with a large number of NPCs, it is often more efficient to batch the raycasts operations. In this case, it would be ideal to pause the tree, wait for the raycast results, and then continue execution on the next frame.
 
-This can be easily achieved with asynchronous functions. However, since this implementation uses regular functions instead of async ones, implementing this behavior requires introducing additional flags within the blackboard and checking them in conditions.
+To solve this problem I started a new project [Unitask Functional Behavior Tree](https://github.com/dmitrybaltin/UnitaskFBT) based on async functions. 
 
-It may make sense to develop an asynchronous version of this pattern. While it would be more convenient for such cases, it could be less efficient in terms of memory and performance. However, the performance loss is likely to be negligible compared to other bottlenecks in your code, and the added convenience may be more valuable.
-
-To solve this problem I plan to create an asynchronous version of the tree, supporting both standard async/await and UniTask.
-
-## Development Plans
+# Development Plans
 
 The core idea has been successfully implemented, and the result is close to 100% of the expected outcome. The planned development will be evolutionary, including:
 - Enhancing the library based on user feedback.
@@ -552,15 +560,3 @@ The core idea has been successfully implemented, and the result is close to 100%
 - Attempting to reduce boilerplate code in behavior trees (although this is unlikely, it’s not ruled out).
 
 Additionally, I’m considering the creation of a more advanced behavior tree based on the same functional principles, such as an asynchronous tree (using async functions) or an event-driven tree. However, it’s still unclear whether these more complex BT models would justify the time and effort required to implement them.
-
----
-
-## Conclusion
-
-The Functional Behavior Tree library provides a streamlined, efficient, and modern solution to behavior tree implementation. By leveraging functional programming principles, memory optimizations, and modern C# features, it delivers:
-
-- Simple and effective debugging.
-- Zero runtime memory allocation.
-- Clean and readable syntax.
-
-While some compromises were necessary for compatibility, the overall design remains robust and aligns closely with the original vision.
