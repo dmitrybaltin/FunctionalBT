@@ -8,7 +8,7 @@ namespace Baltin.FBT
     /// Extended version of Functional Behaviour tree containing some additional convenient nodes
     /// </summary>
     /// <typeparam name="T">Blackboard type</typeparam>
-    public static class ExtendedFbt
+    public static class ExtendedNodes
     {
         /// <summary>
         /// Action node, using Action<T> as a delegate to execute
