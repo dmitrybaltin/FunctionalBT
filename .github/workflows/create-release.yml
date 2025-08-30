@@ -13,8 +13,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # 1?? Checkout the repository
       - uses: actions/checkout@v3
 
+      # 2?? Get version from package.json
       - name: Get package.json version
         run: |
           VERSION=$(grep '"version"' package.json | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
@@ -25,16 +27,55 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Release version: v$VERSION"
 
+      # 3?? Setup Node.js (required for conventional-changelog)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 4?? Install conventional-changelog CLI
+      - name: Install conventional-changelog-cli
+        run: npm install -g conventional-changelog-cli
+
+      # 5?? Generate changelog
+      - name: Generate changelog
+        run: |
+          # Save current number of lines in CHANGELOG.md (0 if file doesn't exist)
+          OLD_LINES=$(wc -l < CHANGELOG.md || echo 0)
+          
+          # Generate/update changelog
+          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0
+          
+          # Count total lines after generation
+          NEW_LINES=$(wc -l < CHANGELOG.md)
+          
+          # Calculate how many lines were added
+          ADDED_LINES=$((NEW_LINES - OLD_LINES))
+          
+          # Save number of added lines for next step
+          echo "ADDED_LINES=$ADDED_LINES" >> $GITHUB_ENV
+
+      # 6?? Prepare release notes from changelog
+      - name: Prepare release notes
+        id: changelog
+        run: |
+          # Take only the lines that were added in this release
+          RELEASE_BODY=$(tail -n ${{ env.ADDED_LINES }} CHANGELOG.md)
+          
+          # Save to GitHub Actions environment variable for the release step
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+
+      # 7?? Create GitHub Release with tag and changelog
       - name: Create GitHub Release
         uses: actions/create-release@v1
         with:
           tag_name: v${{ env.VERSION }}
           release_name: Release v${{ env.VERSION }}
           draft: false
-          prerelease: ${{ github.ref == 'refs/heads/test' }} # на ветке test будут пререлизы
-          body: |
-            Changes in this release:
-            - TODO: перечисли изменения или сгенерируй changelog
+          prerelease: ${{ github.ref == 'refs/heads/test' }}
+          body: ${{ env.RELEASE_BODY }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
