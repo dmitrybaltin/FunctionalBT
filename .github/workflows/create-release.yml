@@ -1,0 +1,40 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+      - test
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get package.json version
+        run: |
+          VERSION=$(grep '"version"' package.json | head -1 | sed -E 's/.*"version": *"([^"]+)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "Version not found in package.json" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Release version: v$VERSION"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Release v${{ env.VERSION }}
+          draft: false
+          prerelease: ${{ github.ref == 'refs/heads/test' }} # на ветке test будут пререлизы
+          body: |
+            Changes in this release:
+            - TODO: перечисли изменения или сгенерируй changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
