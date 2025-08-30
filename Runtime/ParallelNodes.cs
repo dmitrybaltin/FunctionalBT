@@ -18,7 +18,7 @@ namespace Baltin.FBT
     /// Here are some controversial nodes that I am not sure are necessary.
     /// </summary>
     /// <typeparam name="T">Blackboard type</typeparam>
-    public static class ParallelFbtNodes
+    public static class ParallelNodes
     {
         /// <summary>
         /// Current status of the parallel node aggregating statuses of all the children nodes

@@ -42,7 +42,7 @@ namespace Baltin.FBT
     /// 3. Extremely fast, because here inside there are only the simplest conditions, loops and procedure calls
     /// </summary>
     /// <typeparam name="T">A type of 'blackboard' that is an interface to the data and behavior of the controlled object.</typeparam>
-    public static class LightestFbt
+    public static class MainNodes
     {
         /// <summary>
         /// Classic inverter node
